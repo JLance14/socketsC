@@ -122,6 +122,9 @@ void process_menu_option(int s, int option)
 		case MENU_OP_DOMAIN_RQ:
 			process_domain(s);
 			break;
+		case MENU_OP_ADD_DOMAIN_IP:
+			process_ADD_DOMAIN_operation(s);
+			break;
     case MENU_OP_FINISH:
       exit(0); 
       break;
@@ -174,8 +177,6 @@ void process_domain(int sock)
 
 	char buffer[MAX_BUFF_SIZE];
 
-
-	
 	sendOpCodeMSG(sock, MSG_DOMAIN_RQ);
 
 	printf("Domain name to search: \n");
@@ -199,10 +200,22 @@ void process_domain(int sock)
 
 	msg_size = recv(sock, buffer, sizeof(buffer), 0);
 
-	int noDomains = msg_size/sizeof(short);
+	int numDomains = msg_size/sizeof(short);
+}
 
+void process_ADD_DOMAIN_operation(int sock) {
+
+	char buffer[MAX_BUFF_SIZE];
+
+	char newDomain[MAX_HOST_SIZE];
+
+	printf("Enter new domain name: \n");
+	scanf("%s\n", newDomain);
+	printf("IP addresses to add to this domain");
 	
 
+
+	//send(sock, )
 }
 
 

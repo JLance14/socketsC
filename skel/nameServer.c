@@ -356,7 +356,7 @@ int process_DOMAIN_RQ_msg(int sock, char* buffer, struct _DNSTable *dnsTable)
 
   int numOfEntries = sizeof(dnsTable) / sizeof(short);
 
-  char array[4];
+  char *array[4][100];
 
   char *domainRequested;
   
@@ -366,16 +366,24 @@ int process_DOMAIN_RQ_msg(int sock, char* buffer, struct _DNSTable *dnsTable)
 
   printf("dns_table_size: %d\n", numOfEntries);
 
-  
+  printf("Prog");
   
   for (int i = 0; i<numOfEntries; i++) {
-    array[i] = ptr;
+    strcpy(array[i], ptr);
     printf("DNS %d: %s\n", i+1, ptr);
     ptr = ptr->nextDNSEntry;
     printf("array[%d]: %s\n",i, array);
   }
+
+   printf("Domain Request received\n");
+
+  msg_size = recv(sock,buffer, sizeof(buffer), 0 );
   
-  //printf("ARRAY: %s\n", array[0]);
+  domainRequested = buffer + sizeof(short);
+
+  printf("domain Requested: %s\n", domainRequested );
+
+  printf("Searching database\n");
 
   //printf("ARRAY: %s", array[0]);
   //printf("ARRAY: %s", array[1]);
@@ -392,15 +400,7 @@ int process_DOMAIN_RQ_msg(int sock, char* buffer, struct _DNSTable *dnsTable)
 
   */
 
-  printf("Domain Request received\n");
-
-  msg_size = recv(sock,buffer, sizeof(buffer), 0 );
-
-  printf("Message size: %d\n", msg_size);
-
-  domainRequested = buffer + sizeof(short);
-
-  printf("message: %s\n", domainRequested );
+ 
 
   // RETRIEVE IP ADDRESSES
 
