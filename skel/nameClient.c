@@ -169,7 +169,6 @@ void process_list_operation(int sock)
 
 void process_domain(int sock) 
 {
-
 	int offset=0;
 	int msg_size=0;
 
@@ -184,7 +183,9 @@ void process_domain(int sock)
 	printf("Domain name entered: %s\n", domainName);
 
 	msg_size+=domainName;
+ // strlen(domainName);
 
+ 
 	stshort(MSG_DOMAIN_RQ, buffer);
 
 	offset+=sizeof(short);
@@ -209,10 +210,31 @@ void process_ADD_DOMAIN_operation(int sock) {
 
 	char newDomain[MAX_HOST_SIZE];
 
+	int numIP=0;
+
 	printf("Enter new domain name: \n");
-	scanf("%s\n", newDomain);
-	printf("IP addresses to add to this domain");
+	scanf("%s", newDomain);
+	printf("number of IP addresses to add to this domain:\n");
+
+	//TODO: ADD ERROR CONTROL 
+
+	scanf("%d", &numIP);
+	printf("Ok, let's add %d IP addresses.\n", numIP);
+
+	char *array[numIP][100];
+
+	char *value;
+
 	
+	printf("Enter IP addresses\n");
+
+	for (int i=0; i<numIP; i++) {
+		scanf("%s", value);
+		printf("value %d: %s \n",&value, i);
+	}
+
+
+
 
 
 	//send(sock, )

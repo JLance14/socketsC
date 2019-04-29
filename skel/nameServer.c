@@ -339,7 +339,7 @@ void process_LIST_RQ_msg(int sock, struct _DNSTable *dnsTable)
 
   offset+=sizeof(short);
 
-  memcpy(msg+sizeof(short), dns_table_as_byteArray, msg_size);
+  memcpy(msg+sizeof(short), dns_table_as_byteArray, dns_table_size);
 
   offset+=msg_size;
 
@@ -347,12 +347,14 @@ void process_LIST_RQ_msg(int sock, struct _DNSTable *dnsTable)
 
   printf("offset: %d\n", offset);
 
-  send(sock, msg, offset+1, 0);  
+  send(sock, msg, msg_size+1, 0);  
 }
 
 int process_DOMAIN_RQ_msg(int sock, char* buffer, struct _DNSTable *dnsTable)
 {
   struct _DNSEntry *ptr = dnsTable->first_DNSentry;
+
+  //struct _IP *ip = dnsTable->first_DNSentry->first_ip;
 
   int numOfEntries = sizeof(dnsTable) / sizeof(short);
 
@@ -366,7 +368,7 @@ int process_DOMAIN_RQ_msg(int sock, char* buffer, struct _DNSTable *dnsTable)
 
   printf("dns_table_size: %d\n", numOfEntries);
 
-  printf("Prog");
+  //printf("IP: %s\n", ip->);
   
   for (int i = 0; i<numOfEntries; i++) {
     strcpy(array[i], ptr);
@@ -385,10 +387,8 @@ int process_DOMAIN_RQ_msg(int sock, char* buffer, struct _DNSTable *dnsTable)
 
   printf("Searching database\n");
 
-  //printf("ARRAY: %s", array[0]);
-  //printf("ARRAY: %s", array[1]);
+  // TODO: LOOP TO SEE IF SERVER HAS DOMAIN
 
-  //printf("DNS TABLE SIZE: %d\n", dnsTable/sizeof);
 
   /*for (int i=0; i < dnsTable)
 
@@ -404,6 +404,7 @@ int process_DOMAIN_RQ_msg(int sock, char* buffer, struct _DNSTable *dnsTable)
 
   // RETRIEVE IP ADDRESSES
 
+  // GET IP ADDRESS FROM DOMAIN NAME
 
 }
 
