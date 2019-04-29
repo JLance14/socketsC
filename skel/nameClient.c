@@ -101,27 +101,7 @@ void printa_menu()
  * Function that sends a list request receives the list and displays it.
  * @param s The communications socket. 
  */
-void process_list_operation(int sock)
-{
-	printf("Processing operation 1: List of domains\n");
-  char buffer[DNS_TABLE_MAX_SIZE];
-  int msg_size;
 
-  sendOpCodeMSG(sock, MSG_LIST_RQ);
-
-  memset(buffer, '\0', sizeof(buffer));
-
-	recv(sock, buffer, sizeof(buffer), 0);
-
-	printf("message received");
-
-	printf("%s\n", buffer + sizeof(short));
-
-
-  //TODO: rebre missatge LIST
-  //TODO: Descomentar la següent línia
-  //printDNSTableFromAnArrayOfBytes(buffer+sizeof(short), msg_size-sizeof(short));
-}
 
 /** 
  * Function that process the menu option set by the user by calling 
@@ -140,7 +120,7 @@ void process_menu_option(int s, int option)
       process_list_operation(s);
       break;
 		case MENU_OP_DOMAIN_RQ:
-			//TODO:
+			process_domain(s);
 			break;
     case MENU_OP_FINISH:
       exit(0); 
@@ -164,6 +144,64 @@ void process_HELLO_operation(int sock){
 	recv(sock,buffer, sizeof(buffer), 0 );
 
 	printf("message: %s\n", buffer +sizeof(short) );
+
+}
+
+void process_list_operation(int sock)
+{
+	printf("Processing operation 1: List of domains\n");
+  char buffer[DNS_TABLE_MAX_SIZE];
+  int msg_size;
+
+  sendOpCodeMSG(sock, MSG_LIST_RQ);
+
+  memset(buffer, '\0', sizeof(buffer));
+
+	msg_size = recv(sock, buffer, sizeof(buffer), 0);
+
+	printf("Domains: \n");
+
+  printDNSTableFromAnArrayOfBytes(buffer+sizeof(short), msg_size-sizeof(short));
+}
+
+void process_domain(int sock) 
+{
+
+	int offset=0;
+	int msg_size=0;
+
+	char domainName[MAX_BUFF_SIZE];
+
+	char buffer[MAX_BUFF_SIZE];
+
+
+	
+	sendOpCodeMSG(sock, MSG_DOMAIN_RQ);
+
+	printf("Domain name to search: \n");
+	scanf("%s", domainName);
+	printf("Domain name entered: %s\n", domainName);
+
+	msg_size+=domainName;
+
+	stshort(MSG_DOMAIN_RQ, buffer);
+
+	offset+=sizeof(short);
+	strcpy(buffer + offset, domainName);
+
+	offset+=msg_size;
+
+	send(sock, buffer, offset+1, 0);
+
+	// RECEIVE AND PROCESS REPLY
+
+	memset(buffer, '\0', sizeof(buffer));
+
+	msg_size = recv(sock, buffer, sizeof(buffer), 0);
+
+	int noDomains = msg_size/sizeof(short);
+
+	
 
 }
 

@@ -256,28 +256,7 @@ int getProgramOptions(int argc, char* argv[], char *dns_file, int *_port)
  * @param s the socket connected to the client.
  * @param dnsTable the table with all the domains
  */
-void process_LIST_RQ_msg(int sock, struct _DNSTable *dnsTable)
-{
-  char *dns_table_as_byteArray;
-  char *msg;
-  int dns_table_size;
-  int msg_size = sizeof(short);
-  
 
-  dns_table_as_byteArray = dnsTableToByteArray(dnsTable, &dns_table_size);
-  
-  msg_size += dns_table_size;
-  
-  msg = malloc(msg_size);
-
-  stshort(MSG_LIST);
-
-  // TODO: HERE
-  
-  //TODO: set the operation code and the table data
-  //TODO: send the message
-  
-}
 
 /** 
  * Receives and process the request from a client.
@@ -305,7 +284,7 @@ int process_msg(int sock, struct _DNSTable *dnsTable)
       process_LIST_RQ_msg(sock, dnsTable);
       break;  
     case MSG_DOMAIN_RQ:
-      break;                 
+      process_DOMAIN_RQ_msg(sock, buffer, dnsTable);           
     case MSG_FINISH:
       done = 1;
       break;
@@ -340,6 +319,94 @@ void process_HELLO_RQ_msg(int sock)
 
 }
 
+void process_LIST_RQ_msg(int sock, struct _DNSTable *dnsTable)
+{
+  char *dns_table_as_byteArray;
+  char *msg;
+  int dns_table_size;
+  int msg_size = sizeof(short);
+  int offset=0;
+
+  dns_table_as_byteArray = dnsTableToByteArray(dnsTable, &dns_table_size);
+
+  printf("dns_table_size: %d\n", dns_table_size);
+  
+  msg_size += dns_table_size;
+  
+  msg = malloc(msg_size);
+
+  stshort(MSG_LIST, msg);
+
+  offset+=sizeof(short);
+
+  memcpy(msg+sizeof(short), dns_table_as_byteArray, msg_size);
+
+  offset+=msg_size;
+
+  printf("msg_size: %d\n", msg_size);
+
+  printf("offset: %d\n", offset);
+
+  send(sock, msg, offset+1, 0);  
+}
+
+int process_DOMAIN_RQ_msg(int sock, char* buffer, struct _DNSTable *dnsTable)
+{
+  struct _DNSEntry *ptr = dnsTable->first_DNSentry;
+
+  int numOfEntries = sizeof(dnsTable) / sizeof(short);
+
+  char array[4];
+
+  char *domainRequested;
+  
+  int msg_size=0;
+
+  char *msg;
+
+  printf("dns_table_size: %d\n", numOfEntries);
+
+  
+  
+  for (int i = 0; i<numOfEntries; i++) {
+    array[i] = ptr;
+    printf("DNS %d: %s\n", i+1, ptr);
+    ptr = ptr->nextDNSEntry;
+    printf("array[%d]: %s\n",i, array);
+  }
+  
+  //printf("ARRAY: %s\n", array[0]);
+
+  //printf("ARRAY: %s", array[0]);
+  //printf("ARRAY: %s", array[1]);
+
+  //printf("DNS TABLE SIZE: %d\n", dnsTable/sizeof);
+
+  /*for (int i=0; i < dnsTable)
+
+  while () {
+    if (strcmp(msg,dnsTable) == 0) {
+      printf("")
+    }
+  }
+
+  */
+
+  printf("Domain Request received\n");
+
+  msg_size = recv(sock,buffer, sizeof(buffer), 0 );
+
+  printf("Message size: %d\n", msg_size);
+
+  domainRequested = buffer + sizeof(short);
+
+  printf("message: %s\n", domainRequested );
+
+  // RETRIEVE IP ADDRESSES
+
+
+}
+
 int main (int argc, char * argv[])
 {
   struct _DNSTable *dnsTable;
@@ -355,8 +422,9 @@ int main (int argc, char * argv[])
   int sClient;
 
 
-
+  
   dnsTable = loadDNSTableFromFile(dns_file);
+
   printDNSTable(dnsTable);
 
   
