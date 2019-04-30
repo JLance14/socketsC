@@ -182,16 +182,16 @@ void process_domain(int sock)
 	scanf("%s", domainName);
 	printf("Domain name entered: %s\n", domainName);
 
-	msg_size+=domainName;
- // strlen(domainName);
-
- 
+	msg_size+=strlen(domainName);
+  
 	stshort(MSG_DOMAIN_RQ, buffer);
 
 	offset+=sizeof(short);
 	strcpy(buffer + offset, domainName);
 
 	offset+=msg_size;
+
+
 
 	send(sock, buffer, offset+1, 0);
 

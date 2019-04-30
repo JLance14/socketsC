@@ -297,10 +297,11 @@ int process_msg(int sock, struct _DNSTable *dnsTable)
 
 void process_HELLO_RQ_msg(int sock)
 {
-  printf("OK");
   char buffer[MAX_BUFF_SIZE];
 
   char *hola = "Hello World";
+
+  printf("HELLO WORLD SENT\n");
 
   int offset=0;
   int msg_size = strlen(hola);
@@ -328,8 +329,6 @@ void process_LIST_RQ_msg(int sock, struct _DNSTable *dnsTable)
   int offset=0;
 
   dns_table_as_byteArray = dnsTableToByteArray(dnsTable, &dns_table_size);
-
-  printf("dns_table_size: %d\n", dns_table_size);
   
   msg_size += dns_table_size;
   
@@ -343,10 +342,6 @@ void process_LIST_RQ_msg(int sock, struct _DNSTable *dnsTable)
 
   offset+=msg_size;
 
-  printf("msg_size: %d\n", msg_size);
-
-  printf("offset: %d\n", offset);
-
   send(sock, msg, msg_size+1, 0);  
 }
 
@@ -356,36 +351,49 @@ int process_DOMAIN_RQ_msg(int sock, char* buffer, struct _DNSTable *dnsTable)
 
   //struct _IP *ip = dnsTable->first_DNSentry->first_ip;
 
+  struct _DNSEntry *info = dnsTable->first_DNSentry;
+
+  char domain[NAME_LENGTH];
+  
+  strcpy(domain, info->domainName);
+
+  printf("FIRST DOMAIN IN LIST: %s\n", domain);
+
   int numOfEntries = sizeof(dnsTable) / sizeof(short);
 
-  char *array[4][100];
+  char* userInput;
 
-  char *domainRequested;
-  
-  int msg_size=0;
 
-  char *msg;
+  printf("GETTING USER INPUT\n");
+
+  getUserInput(sock, buffer);
+
+
+
 
   printf("dns_table_size: %d\n", numOfEntries);
 
-  //printf("IP: %s\n", ip->);
-  
+  printf("NEW TECHNIQUE 2\n");
+
+  while (ptr != NULL) {
+    printf("Website name: %s\n", ptr->domainName);
+    if (strcmp(ptr->domainName, buffer) == 0) {
+      printf("found");
+    }
+    printf("searching for\n: %s", buffer);
+    ptr = ptr->nextDNSEntry;
+  }
+  /*
   for (int i = 0; i<numOfEntries; i++) {
     strcpy(array[i], ptr);
-    printf("DNS %d: %s\n", i+1, ptr);
+    printf("Website name %d: %s\n", i+1, ptr->domainName);
     ptr = ptr->nextDNSEntry;
-    printf("array[%d]: %s\n",i, array);
   }
+  */
 
-   printf("Domain Request received\n");
 
-  msg_size = recv(sock,buffer, sizeof(buffer), 0 );
-  
-  domainRequested = buffer + sizeof(short);
 
-  printf("domain Requested: %s\n", domainRequested );
 
-  printf("Searching database\n");
 
   // TODO: LOOP TO SEE IF SERVER HAS DOMAIN
 
@@ -406,6 +414,40 @@ int process_DOMAIN_RQ_msg(int sock, char* buffer, struct _DNSTable *dnsTable)
 
   // GET IP ADDRESS FROM DOMAIN NAME
 
+}
+
+
+
+int compareStrings (char* entryString, char* inputString) {
+  int result;
+
+  result = strcmp(entryString, inputString);
+
+  if (result == 0) {
+    return 0;
+  }
+  else {
+    return 1;
+  }
+}
+
+void getUserInput(int sock, char* buffer) {
+
+  int msg_size=0;
+
+  char *domainRequested;
+
+  char domain[100];
+
+  printf("Domain Request received\n");
+
+  msg_size = recv(sock,buffer, sizeof(buffer), 0 );
+  
+  // domainRequested = buffer + sizeof(short);
+
+  domainRequested = buffer + sizeof(short); 
+
+  printf("domain Requested: %s\n", domainRequested );
 }
 
 int main (int argc, char * argv[])
