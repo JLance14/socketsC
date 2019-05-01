@@ -249,6 +249,26 @@ int getProgramOptions(int argc, char* argv[], char *dns_file, int *_port)
 	return 0;
 }
 
+void getUserInput(int sock, char* buffer) {
+
+  int msg_size=0;
+
+  char *domainRequested;
+
+  char domain[100];
+
+  msg_size = recv(sock,buffer, sizeof(buffer), 0 );
+
+  domainRequested = buffer + sizeof(short); 
+
+  printf("msg size: %d\n", msg_size);
+
+  printf("domain Requested: %s\n", domainRequested);
+
+  printf("domain Requested (TEST): %s\n", buffer + 4);
+
+}
+
 
 /**
  * Function that generates the array of bytes with the dnsTable data and 
@@ -284,7 +304,11 @@ int process_msg(int sock, struct _DNSTable *dnsTable)
       process_LIST_RQ_msg(sock, dnsTable);
       break;  
     case MSG_DOMAIN_RQ:
-      process_DOMAIN_RQ_msg(sock, buffer, dnsTable);           
+      process_DOMAIN_RQ_msg(sock, buffer, dnsTable);
+      break;
+    case MSG_ADD_DOMAIN:
+      process_ADD_DOMAIN_msg(sock, buffer, msg_size, dnsTable); 
+      break;          
     case MSG_FINISH:
       done = 1;
       break;
@@ -301,15 +325,14 @@ void process_HELLO_RQ_msg(int sock)
 
   char *hola = "Hello World";
 
-  printf("HELLO WORLD SENT\n");
-
   int offset=0;
   int msg_size = strlen(hola);
 
-  memset(buffer, '\0',sizeof(buffer)); //AQUI
+  memset(buffer, '\0',sizeof(buffer));
 
   stshort(MSG_HELLO, buffer);
 
+  printf("About to send\n");
   offset+=sizeof(short);
 
   strcpy(buffer + offset, hola);
@@ -318,6 +341,7 @@ void process_HELLO_RQ_msg(int sock)
 
   send(sock,buffer,offset + 1,0);
 
+  printf("HELLO WORLD SENT\n");
 }
 
 void process_LIST_RQ_msg(int sock, struct _DNSTable *dnsTable)
@@ -342,7 +366,11 @@ void process_LIST_RQ_msg(int sock, struct _DNSTable *dnsTable)
 
   offset+=msg_size;
 
-  send(sock, msg, msg_size+1, 0);  
+  //send(sock, msg, msg_size+1, 0); 
+
+  send(sock, msg, offset+1, 0);   
+
+  printf("Replaced msg_size2");
 }
 
 int process_DOMAIN_RQ_msg(int sock, char* buffer, struct _DNSTable *dnsTable)
@@ -368,87 +396,47 @@ int process_DOMAIN_RQ_msg(int sock, char* buffer, struct _DNSTable *dnsTable)
 
   getUserInput(sock, buffer);
 
-
+  char domainFound[MAX_BUFF_SIZE];
 
 
   printf("dns_table_size: %d\n", numOfEntries);
 
-  printf("NEW TECHNIQUE 2\n");
 
   while (ptr != NULL) {
     printf("Website name: %s\n", ptr->domainName);
-    if (strcmp(ptr->domainName, buffer) == 0) {
-      printf("found");
+    if (strcmp(ptr->domainName, buffer + sizeof(short)) == 0) {
+      printf("found\n");
+      strcpy(domainFound, ptr->domainName);
+      printf("Domain FOUND : %s", domainFound);
+
     }
-    printf("searching for\n: %s", buffer);
+    printf("searching for: %s\n", buffer + sizeof(short));
     ptr = ptr->nextDNSEntry;
   }
-  /*
-  for (int i = 0; i<numOfEntries; i++) {
-    strcpy(array[i], ptr);
-    printf("Website name %d: %s\n", i+1, ptr->domainName);
-    ptr = ptr->nextDNSEntry;
-  }
-  */
 
+}
 
+void process_ADD_DOMAIN_msg(int sock, char* buffer, int msg_size, struct _DNSTable *dnsTable) {
+  printf("PROCESSING ADD_DOMAIN");
+  struct _DNSEntry* newEntry = malloc(sizeof(struct _DNSEntry));
 
+  char domainName[NAME_LENGTH];
+  
 
-
-  // TODO: LOOP TO SEE IF SERVER HAS DOMAIN
-
-
-  /*for (int i=0; i < dnsTable)
-
-  while () {
-    if (strcmp(msg,dnsTable) == 0) {
-      printf("")
-    }
-  }
-
-  */
+  printf("HERE WE ARE");
 
  
 
-  // RETRIEVE IP ADDRESSES
 
-  // GET IP ADDRESS FROM DOMAIN NAME
+}  
+
+
+
+void newIPStruct() {
+  struct _IP *ip_struct = malloc(sizeof(struct _IP));
 
 }
 
-
-
-int compareStrings (char* entryString, char* inputString) {
-  int result;
-
-  result = strcmp(entryString, inputString);
-
-  if (result == 0) {
-    return 0;
-  }
-  else {
-    return 1;
-  }
-}
-
-void getUserInput(int sock, char* buffer) {
-
-  int msg_size=0;
-
-  char *domainRequested;
-
-  char domain[100];
-
-  printf("Domain Request received\n");
-
-  msg_size = recv(sock,buffer, sizeof(buffer), 0 );
-  
-  // domainRequested = buffer + sizeof(short);
-
-  domainRequested = buffer + sizeof(short); 
-
-  printf("domain Requested: %s\n", domainRequested );
-}
 
 int main (int argc, char * argv[])
 {

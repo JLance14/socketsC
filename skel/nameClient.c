@@ -146,7 +146,7 @@ void process_HELLO_operation(int sock){
 
 	recv(sock,buffer, sizeof(buffer), 0 );
 
-	printf("message: %s\n", buffer +sizeof(short) );
+	printf("message: %s\n", buffer +sizeof(short));
 
 }
 
@@ -172,26 +172,39 @@ void process_domain(int sock)
 	int offset=0;
 	int msg_size=0;
 
-	char domainName[MAX_BUFF_SIZE];
+	char *domainName;
+
+	char userInput[MAX_BUFF_SIZE];
 
 	char buffer[MAX_BUFF_SIZE];
 
+	memset(buffer, '\0',sizeof(buffer));
+
 	sendOpCodeMSG(sock, MSG_DOMAIN_RQ);
 
-	printf("Domain name to search: \n");
-	scanf("%s", domainName);
-	printf("Domain name entered: %s\n", domainName);
+	printf("Domain name to search: ");
+	scanf("%s", userInput);
 
-	msg_size+=strlen(domainName);
-  
+	strcpy(domainName, userInput);
+
+	printf("NEW DOMAIN: %s\n", domainName);
+
+	msg_size = strlen(domainName);
+
+
 	stshort(MSG_DOMAIN_RQ, buffer);
 
 	offset+=sizeof(short);
+
 	strcpy(buffer + offset, domainName);
+
+	printf("Domain name entered (buffer): %s\n", buffer+offset);
+
+	printf("Domain name entered: %s\n", domainName);
 
 	offset+=msg_size;
 
-
+	printf("domain length %d", strlen(domainName));
 
 	send(sock, buffer, offset+1, 0);
 
@@ -210,18 +223,20 @@ void process_ADD_DOMAIN_operation(int sock) {
 
 	char newDomain[MAX_HOST_SIZE];
 
+	int offset=0;
+
 	int numIP=0;
 
 	printf("Enter new domain name: \n");
-	scanf("%s", newDomain);
+	// scanf("%s", newDomain);
 	printf("number of IP addresses to add to this domain:\n");
 
 	//TODO: ADD ERROR CONTROL 
 
-	scanf("%d", &numIP);
-	printf("Ok, let's add %d IP addresses.\n", numIP);
+	//scanf("%d", &numIP);
+	//printf("Ok, let's add %d IP addresses.\n", numIP);
 
-	char *array[numIP][100];
+	/* char *array[numIP][100];
 
 	char *value;
 
@@ -231,8 +246,12 @@ void process_ADD_DOMAIN_operation(int sock) {
 	for (int i=0; i<numIP; i++) {
 		scanf("%s", value);
 		printf("value %d: %s \n",&value, i);
-	}
 
+	*/
+
+	sendOpCodeMSG(sock, MSG_ADD_DOMAIN);
+	
+	send(sock, buffer, offset+1, 0);
 
 
 
