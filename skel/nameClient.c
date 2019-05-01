@@ -204,7 +204,7 @@ void process_domain(int sock)
 
 	offset+=msg_size;
 
-	printf("domain length %d", strlen(domainName));
+	printf("domain length %d\n", strlen(domainName));
 
 	send(sock, buffer, offset+1, 0);
 
@@ -214,7 +214,27 @@ void process_domain(int sock)
 
 	msg_size = recv(sock, buffer, sizeof(buffer), 0);
 
-	int numDomains = msg_size/sizeof(short);
+	printf("RECEIVED MESSAGE of size: %d\n", msg_size);
+
+	int numDomains = msg_size/sizeof(struct in_addr);
+
+	printf("%d IPs recibidos\n", numDomains);
+
+	struct in_addr add;
+
+	add = ldaddr(buffer);
+
+	//printf("IP ADDRESS: %s", inet_ntoa(add));
+
+	//printf("IP ADDRESS: %s", add);
+
+	printf("first IP %s\n", buffer);
+
+	printf("first IP %s\n", buffer);
+
+	printf("first IP %s\n", buffer);
+
+	printf("first IP %s\n", buffer);
 }
 
 void process_ADD_DOMAIN_operation(int sock) {

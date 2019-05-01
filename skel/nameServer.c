@@ -249,25 +249,6 @@ int getProgramOptions(int argc, char* argv[], char *dns_file, int *_port)
 	return 0;
 }
 
-void getUserInput(int sock, char* buffer) {
-
-  int msg_size=0;
-
-  char *domainRequested;
-
-  msg_size = recv(sock,buffer, sizeof(buffer), 0 );
-
-  domainRequested = buffer + sizeof(short); 
-
-  printf("msg size: %d\n", msg_size);
-
-  printf("domain Requested: %s\n", domainRequested);
-
-  printf("domain Requested (TEST): %s\n", buffer + 4);
-
-}
-
-
 /**
  * Function that generates the array of bytes with the dnsTable data and 
  * sends it.
@@ -377,31 +358,79 @@ int process_DOMAIN_RQ_msg(int sock, char* buffer, struct _DNSTable *dnsTable)
 
   int numOfEntries = sizeof(dnsTable) / sizeof(short);
 
-  char* userInput;
+  /**
+        GETTING USER INPUT
+  **/
+  int msg_size=0;
 
-  // funcion que recibe entrada utilizador 
-  getUserInput(sock, buffer);
+  char *domainRequested;
 
+  char replyBuffer[MAX_BUFF_SIZE];
+
+  int boolean = 0;
+
+  msg_size = recv(sock,buffer, sizeof(buffer), 0 );
+
+  domainRequested = buffer + sizeof(short); 
+
+  printf("msg size: %d\nfuncion que recibe entrada utilizador ", msg_size);
+
+  printf("domain Requested: %s\n", domainRequested);
+
+  printf("domain Requested (TEST): %s\n", buffer + 4);
 
   printf("dns_table_size: %d\n", numOfEntries);
 
+  struct in_addr addr;
+
+  //Convert the IP dotted quad into struct in_addr
+  //inet_aton("10.4.32.41", &(addr));
+
+  //staddr(addr,replyBuffer);
+
+  //memset(buffer, '\0',sizeof(buffer));
+
   int counter=0;
+
+  int offset=0;
 
   while (ptr != NULL) {
     printf("Website name: %s\n", ptr->domainName);
-    if (strcmp(ptr->domainName, buffer + sizeof(short)) == 0) {
+    if (strcmp(ptr->domainName, domainRequested) == 0) {
       printf("found\n");
-      //struct _IP *firstIP = ptr->first_ip;
+      boolean = 1;
+
       while(ptr->first_ip != NULL) {
         counter++;
-        //inet_aton(ptr->first_ip, &(address));
+        
+        
+        struct in_addr address;
+
+        staddr(address, inet_ntoa(ptr->first_ip->IP));
+
         printf("IP #%d for this address: %s\n", counter, inet_ntoa(ptr->first_ip->IP));
+
+        staddr(address, replyBuffer+offset);
+
+        offset+=sizeof(struct in_addr);
+        
         ptr->first_ip = ptr->first_ip->nextIP;
       }
+      break;
+    } else {
+      printf("searching for: %s\n", domainRequested);
+      ptr = ptr->nextDNSEntry;
     }
-    printf("searching for: %s\n", buffer + sizeof(short));
-    ptr = ptr->nextDNSEntry;
+    
   }
+  
+  if (boolean == 0) {
+    sendOpCodeMSG(sock, MSG_OP_ERR);
+  }
+
+  send(sock, replyBuffer, offset+1, 0);
+
+ 
 
   printf("NUMBER OF IPs FOR THIS ADDRESS: %d\n", counter);
 
@@ -461,7 +490,7 @@ int main (int argc, char * argv[])
 
   socklen_t client_addr_len = sizeof(client_addr);
 
-  if (bind(sServer, (struct sockaddr *)&server_addr, sizeof(server_addr)) == 0) {
+  if (bind(sServer, (struct sockaddr *)&server_addr, sizeof(server_addr)) != 0) {
     printf("Binding succesful\n");
   };
 
