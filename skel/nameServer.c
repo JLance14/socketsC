@@ -255,8 +255,6 @@ void getUserInput(int sock, char* buffer) {
 
   char *domainRequested;
 
-  char domain[100];
-
   msg_size = recv(sock,buffer, sizeof(buffer), 0 );
 
   domainRequested = buffer + sizeof(short); 
@@ -377,42 +375,35 @@ int process_DOMAIN_RQ_msg(int sock, char* buffer, struct _DNSTable *dnsTable)
 {
   struct _DNSEntry *ptr = dnsTable->first_DNSentry;
 
-  //struct _IP *ip = dnsTable->first_DNSentry->first_ip;
-
-  struct _DNSEntry *info = dnsTable->first_DNSentry;
-
-  char domain[NAME_LENGTH];
-  
-  strcpy(domain, info->domainName);
-
-  printf("FIRST DOMAIN IN LIST: %s\n", domain);
-
   int numOfEntries = sizeof(dnsTable) / sizeof(short);
 
   char* userInput;
 
-
-  printf("GETTING USER INPUT\n");
-
+  // funcion que recibe entrada utilizador 
   getUserInput(sock, buffer);
-
-  char domainFound[MAX_BUFF_SIZE];
 
 
   printf("dns_table_size: %d\n", numOfEntries);
 
+  int counter=0;
 
   while (ptr != NULL) {
     printf("Website name: %s\n", ptr->domainName);
     if (strcmp(ptr->domainName, buffer + sizeof(short)) == 0) {
       printf("found\n");
-      strcpy(domainFound, ptr->domainName);
-      printf("Domain FOUND : %s", domainFound);
-
+      //struct _IP *firstIP = ptr->first_ip;
+      while(ptr->first_ip != NULL) {
+        counter++;
+        //inet_aton(ptr->first_ip, &(address));
+        printf("IP #%d for this address: %s\n", counter, inet_ntoa(ptr->first_ip->IP));
+        ptr->first_ip = ptr->first_ip->nextIP;
+      }
     }
     printf("searching for: %s\n", buffer + sizeof(short));
     ptr = ptr->nextDNSEntry;
   }
+
+  printf("NUMBER OF IPs FOR THIS ADDRESS: %d\n", counter);
 
 }
 
