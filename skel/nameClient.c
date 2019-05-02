@@ -228,13 +228,14 @@ void process_domain(int sock)
 
 	//printf("IP ADDRESS: %s", add);
 
-	printf("first IP %s\n", buffer);
+	for (int i = 0; i<numDomains; i++) {
+		printf("IP %d: %s\n", i+1, buffer+i*sizeof(struct in_addr));
+	}
 
-	printf("first IP %s\n", buffer);
+	
 
-	printf("first IP %s\n", buffer);
+	
 
-	printf("first IP %s\n", buffer);
 }
 
 void process_ADD_DOMAIN_operation(int sock) {

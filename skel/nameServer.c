@@ -373,7 +373,9 @@ int process_DOMAIN_RQ_msg(int sock, char* buffer, struct _DNSTable *dnsTable)
 
   domainRequested = buffer + sizeof(short); 
 
-  printf("msg size: %d\nfuncion que recibe entrada utilizador ", msg_size);
+  //funcion que recibe entrada utilizador 
+
+  printf("msg size: %d\n", msg_size);
 
   printf("domain Requested: %s\n", domainRequested);
 
@@ -443,10 +445,7 @@ void process_ADD_DOMAIN_msg(int sock, char* buffer, int msg_size, struct _DNSTab
   char domainName[NAME_LENGTH];
   
 
-  printf("HERE WE ARE");
-
- 
-
+  printf("HERE");
 
 }  
 
