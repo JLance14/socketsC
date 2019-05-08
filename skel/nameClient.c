@@ -187,10 +187,7 @@ void process_domain(int sock)
 
 	strcpy(domainName, userInput);
 
-	printf("NEW DOMAIN: %s\n", domainName);
-
 	msg_size = strlen(domainName);
-
 
 	stshort(MSG_DOMAIN_RQ, buffer);
 
@@ -198,38 +195,44 @@ void process_domain(int sock)
 
 	strcpy(buffer + offset, domainName);
 
-	printf("Domain name entered (buffer): %s\n", buffer+offset);
-
 	printf("Domain name entered: %s\n", domainName);
 
 	offset+=msg_size;
 
-	printf("domain length %d\n", strlen(domainName));
-
-	send(sock, buffer, offset+1, 0);
+	send(sock, buffer, sizeof(short)+strlen(domainName)+1, 0);
 
 	// RECEIVE AND PROCESS REPLY
 
 	memset(buffer, '\0', sizeof(buffer));
 
+	printf("RECEIVING MESSAGE \n");
+
 	msg_size = recv(sock, buffer, sizeof(buffer), 0);
 
 	printf("RECEIVED MESSAGE of size: %d\n", msg_size);
 
+	printf("SIZE OF BUFFER : %d\n", sizeof(buffer));
+
 	int numDomains = msg_size/sizeof(struct in_addr);
 
-	printf("%d IPs recibidos\n", numDomains);
+	printf("%d IPs recibidos\n", (msg_size-sizeof(short))/sizeof(struct in_addr));
 
 	struct in_addr add;
 
-	add = ldaddr(buffer);
+	int off = sizeof(short);
 
-	//printf("IP ADDRESS: %s", inet_ntoa(add));
-
-	//printf("IP ADDRESS: %s", add);
 
 	for (int i = 0; i<numDomains; i++) {
-		printf("IP %d: %s\n", i+1, buffer+i*sizeof(struct in_addr));
+
+		add = ldaddr(buffer+off);
+
+		printf("ip #%d: %s\n", i+1, inet_ntoa(add));
+			
+
+		off+=sizeof(struct in_addr);
+		
+		
+		
 	}
 
 	
@@ -248,36 +251,40 @@ void process_ADD_DOMAIN_operation(int sock) {
 
 	int numIP=0;
 
-	printf("Enter new domain name: \n");
-	// scanf("%s", newDomain);
+	memset(buffer, '\0', sizeof(buffer));
+
+
+	printf("Enter domain name: \n");
+	scanf("%s", newDomain);
 	printf("number of IP addresses to add to this domain:\n");
 
 	//TODO: ADD ERROR CONTROL 
 
-	//scanf("%d", &numIP);
-	//printf("Ok, let's add %d IP addresses.\n", numIP);
+	scanf("%d", &numIP);
+	printf("Ok, let's add %d IP addresses.\n", numIP);
 
-	/* char *array[numIP][100];
-
+	
 	char *value;
 
 	
 	printf("Enter IP addresses\n");
 
+
 	for (int i=0; i<numIP; i++) {
 		scanf("%s", value);
-		printf("value %d: %s \n",&value, i);
+		//printf("value %d: %s \n",&value, i);
+	}
 
-	*/
+	
+	
 
 	sendOpCodeMSG(sock, MSG_ADD_DOMAIN);
 	
 	send(sock, buffer, offset+1, 0);
 
+	printf("MESSAGE SENT");
 
 
-
-	//send(sock, )
 }
 
 

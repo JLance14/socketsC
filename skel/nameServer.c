@@ -283,13 +283,14 @@ int process_msg(int sock, struct _DNSTable *dnsTable)
       process_LIST_RQ_msg(sock, dnsTable);
       break;  
     case MSG_DOMAIN_RQ:
-      process_DOMAIN_RQ_msg(sock, buffer, dnsTable);
+      process_DOMAIN_RQ_msg(sock, buffer, dnsTable, msg_size);
       break;
     case MSG_ADD_DOMAIN:
       process_ADD_DOMAIN_msg(sock, buffer, msg_size, dnsTable); 
       break;          
     case MSG_FINISH:
       done = 1;
+      exit(0);
       break;
     default:exit(0);
       perror("Message code does not exist.\n");
@@ -345,62 +346,82 @@ void process_LIST_RQ_msg(int sock, struct _DNSTable *dnsTable)
 
   offset+=msg_size;
 
-  //send(sock, msg, msg_size+1, 0); 
+  send(sock, msg, msg_size+1, 0); 
 
-  send(sock, msg, offset+1, 0);   
+  //send(sock, msg, offset+1, 0);   
 
   printf("Replaced msg_size2");
 }
 
-int process_DOMAIN_RQ_msg(int sock, char* buffer, struct _DNSTable *dnsTable)
+int process_DOMAIN_RQ_msg(int sock, char* buffer, struct _DNSTable *dnsTable, int rcv)
 {
   struct _DNSEntry *ptr = dnsTable->first_DNSentry;
 
   int numOfEntries = sizeof(dnsTable) / sizeof(short);
 
-  /**
-        GETTING USER INPUT
-  **/
   int msg_size=0;
 
   char *domainRequested;
 
   char replyBuffer[MAX_BUFF_SIZE];
 
-  int boolean = 0;
-
-  msg_size = recv(sock,buffer, sizeof(buffer), 0 );
+  int domainFound = 0;
 
   domainRequested = buffer + sizeof(short); 
 
-  //funcion que recibe entrada utilizador 
+  if (rcv > 2) { // Si el domain ha llegado al servidor
+  
+  
 
-  printf("msg size: %d\n", msg_size);
+  /*
 
-  printf("domain Requested: %s\n", domainRequested);
 
-  printf("domain Requested (TEST): %s\n", buffer + 4);
+  user inputs requested domain
 
-  printf("dns_table_size: %d\n", numOfEntries);
 
-  struct in_addr addr;
+  */
 
-  //Convert the IP dotted quad into struct in_addr
-  //inet_aton("10.4.32.41", &(addr));
 
-  //staddr(addr,replyBuffer);
 
-  //memset(buffer, '\0',sizeof(buffer));
+      printf("domain Requested: %s\n", domainRequested);
 
-  int counter=0;
+      printf("dns_table_size: %d\n", numOfEntries);
+      
 
-  int offset=0;
+      
 
-  while (ptr != NULL) {
+      struct in_addr addr;
+
+
+
+      int counter=0;
+
+      int offset=0;
+
+      stshort(MSG_DOMAIN, replyBuffer);
+
+      offset+=sizeof(short);
+
+      struct _IP* temp;
+
+      
+
+
+      /*
+
+
+      Comparing domain names in dns.txt with user input
+
+
+      */
+
+      temp = ptr->first_ip;
+
+      while (ptr != NULL) {
     printf("Website name: %s\n", ptr->domainName);
     if (strcmp(ptr->domainName, domainRequested) == 0) {
       printf("found\n");
-      boolean = 1;
+      domainFound = 1;
 
       while(ptr->first_ip != NULL) {
         counter++;
@@ -408,9 +429,9 @@ int process_DOMAIN_RQ_msg(int sock, char* buffer, struct _DNSTable *dnsTable)
         
         struct in_addr address;
 
-        staddr(address, inet_ntoa(ptr->first_ip->IP));
-
         printf("IP #%d for this address: %s\n", counter, inet_ntoa(ptr->first_ip->IP));
+
+        address = ptr->first_ip->IP;
 
         staddr(address, replyBuffer+offset);
 
@@ -422,20 +443,19 @@ int process_DOMAIN_RQ_msg(int sock, char* buffer, struct _DNSTable *dnsTable)
     } else {
       printf("searching for: %s\n", domainRequested);
       ptr = ptr->nextDNSEntry;
-    }
+    }  
+  }
     
+    if (domainFound == 0) {
+      sendOpCodeMSG(sock, MSG_OP_ERR);
+    }
+
+    send(sock, replyBuffer, offset, 0);
+
+
+    printf("NUMBER OF IPs FOR THIS ADDRESS: %d\n", counter);
+
   }
-  
-  if (boolean == 0) {
-    sendOpCodeMSG(sock, MSG_OP_ERR);
-  }
-
-  send(sock, replyBuffer, offset+1, 0);
-
- 
-
-  printf("NUMBER OF IPs FOR THIS ADDRESS: %d\n", counter);
-
 }
 
 void process_ADD_DOMAIN_msg(int sock, char* buffer, int msg_size, struct _DNSTable *dnsTable) {
@@ -443,8 +463,11 @@ void process_ADD_DOMAIN_msg(int sock, char* buffer, int msg_size, struct _DNSTab
   struct _DNSEntry* newEntry = malloc(sizeof(struct _DNSEntry));
 
   char domainName[NAME_LENGTH];
-  
 
+  recv(sock, buffer, sizeof(buffer), 0);
+
+	printf("IPs received");
+  
   printf("HERE");
 
 }  
