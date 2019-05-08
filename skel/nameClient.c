@@ -228,11 +228,7 @@ void process_domain(int sock)
 
 		printf("ip #%d: %s\n", i+1, inet_ntoa(add));
 			
-
 		off+=sizeof(struct in_addr);
-		
-		
-		
 	}
 
 	

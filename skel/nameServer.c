@@ -371,25 +371,10 @@ int process_DOMAIN_RQ_msg(int sock, char* buffer, struct _DNSTable *dnsTable, in
 
   if (rcv > 2) { // Si el domain ha llegado al servidor
   
-  
-
-  /*
-
-
-  user inputs requested domain
-
-
-  */
-
-
-
       printf("domain Requested: %s\n", domainRequested);
 
       printf("dns_table_size: %d\n", numOfEntries);
       
-
-      
-
       struct in_addr addr;
 
 
@@ -404,47 +389,36 @@ int process_DOMAIN_RQ_msg(int sock, char* buffer, struct _DNSTable *dnsTable, in
 
       struct _IP* temp;
 
-      
-
-
-      /*
-
-
-      Comparing domain names in dns.txt with user input
-
-
-      */
-
       temp = ptr->first_ip;
 
       while (ptr != NULL) {
-    printf("Website name: %s\n", ptr->domainName);
-    if (strcmp(ptr->domainName, domainRequested) == 0) {
-      printf("found\n");
-      domainFound = 1;
+        printf("Website name: %s\n", ptr->domainName);
+        if (strcmp(ptr->domainName, domainRequested) == 0) {
+          printf("found\n");
+          domainFound = 1;
 
-      while(ptr->first_ip != NULL) {
-        counter++;
-        
-        
-        struct in_addr address;
+          while(ptr->first_ip != NULL) {
+            counter++;
+            
+            
+            struct in_addr address;
 
-        printf("IP #%d for this address: %s\n", counter, inet_ntoa(ptr->first_ip->IP));
+            printf("IP #%d for this address: %s\n", counter, inet_ntoa(ptr->first_ip->IP));
 
-        address = ptr->first_ip->IP;
+            address = ptr->first_ip->IP;
 
-        staddr(address, replyBuffer+offset);
+            staddr(address, replyBuffer+offset);
 
-        offset+=sizeof(struct in_addr);
-        
-        ptr->first_ip = ptr->first_ip->nextIP;
+            offset+=sizeof(struct in_addr);
+            
+            ptr->first_ip = ptr->first_ip->nextIP;
+        }
+        break;
+          } else {
+          printf("searching for: %s\n", domainRequested);
+          ptr = ptr->nextDNSEntry;
+        }  
       }
-      break;
-    } else {
-      printf("searching for: %s\n", domainRequested);
-      ptr = ptr->nextDNSEntry;
-    }  
-  }
     
     if (domainFound == 0) {
       sendOpCodeMSG(sock, MSG_OP_ERR);
