@@ -287,7 +287,10 @@ int process_msg(int sock, struct _DNSTable *dnsTable)
       break;
     case MSG_ADD_DOMAIN:
       process_ADD_DOMAIN_msg(sock, buffer, msg_size, dnsTable); 
-      break;          
+      break;    
+    case MSG_CHANGE_DOMAIN:
+      process_CHANGE_DOMAIN_msg(sock, buffer, msg_size, dnsTable);
+      break;      
     case MSG_FINISH:
       done = 1;
       exit(0);
@@ -442,7 +445,6 @@ void process_ADD_DOMAIN_msg(int sock, char* buffer, int msg_size, struct _DNSTab
   newEntry->first_ip = NULL;
 
 
-
   struct _IP *entryIPList = malloc(sizeof(struct _IP));
 
   struct _IP *nextEntryIPList = malloc(sizeof(struct _IP));
@@ -475,87 +477,65 @@ void process_ADD_DOMAIN_msg(int sock, char* buffer, int msg_size, struct _DNSTab
 
   struct in_addr *add;
 
-
-  
-  
-
-  /*for (int i = 0; i < newEntry->numberOfIPs; i++) {
-    
-    memcpy(&entryIPList->IP, &ldaddr(buffer+offset), sizeof(struct in_addr));
-
-    nextEntryIPList = entryIPList->nextIP;
-    
-    memcpy(&nextEntryIPList->IP, &ldaddr(buffer+offset+sizeof(struct in_addr)), sizeof(struct in_addr));
-
-    printf("IP ADDRESS #%d: %s\n", i+1, inet_ntoa(entryIPList->IP));
-
-    if (i < newEntry->numberOfIPs-1) {
-
-      memcpy(&nextEntryIPList->IP, &ldaddr(buffer+offset+sizeof(struct in_addr)), sizeof(struct in_addr));
-
-      printf("NEXT IP: %s\n", inet_ntoa(nextEntryIPList->IP));
-
-    } else {
-      printf("NEXT IP: NULL \n");
-
-    }
-
-    offset+=sizeof(struct in_addr);
-  }
-  */
-
-
   while (ptr != NULL) {
     printf("DOMAIN NAME OF ENTRY: %s\n", ptr->domainName);
 
     if (ptr->nextDNSEntry == NULL) {
 
-      //ptr->nextDNSEntry = newEntry;
+      ptr->nextDNSEntry = newEntry;
 
-      ptr = newEntry;
+      printf("NEW DOMAIN: %s\n", ptr->nextDNSEntry->domainName);
 
-      printf("NEW DOMAIN: %s\n", ptr->domainName);
+      memcpy(&entryIPList->IP, &ldaddr(buffer+offset), sizeof(struct in_addr));
 
-      
+      printf("pointer 1st IP: %s\n", inet_ntoa(entryIPList->IP));
 
-      for (int i = 0; i<ptr->numberOfIPs; i++) {
-
-        memcpy(&entryIPList->IP, &ldaddr(buffer+offset), sizeof(struct in_addr));
-
-        ptr->first_ip = entryIPList;
-
-        printf("pointer 1st IP: %s\n", inet_ntoa(ptr->first_ip->IP));
-
-        offset+=sizeof(struct in_addr);
-
-        memcpy(&nextEntryIPList->IP, &ldaddr(buffer+offset), sizeof(struct in_addr));
-
-        ptr->first_ip->nextIP = nextEntryIPList;
-
-        if (i < ptr->numberOfIPs-1) {
-
-        printf("NEXT IP: %s\n", inet_ntoa(ptr->first_ip->nextIP->IP));
-
-        } else {
-          printf("NEXT IP: NULL\n");
-        }
-      
-      }
       break;
+
     }
     ptr = ptr->nextDNSEntry;
   }
   
-
-
   printDNSTable(dnsTable);
-
-  
-
   
 }  
 
+process_CHANGE_DOMAIN_msg(int sock, char* buffer, int msg_size, struct _DNSTable dnsTable) {
 
+  struct _IP *entryIPs = malloc(sizeof(struct _IP));
+
+  struct _IP *entry2 = malloc(sizeof(struct _IP));
+
+
+
+  int offset = 0;
+
+  struct in_addr addrOld, addrNew;
+
+  char domainName[MAX_BUFF_SIZE];
+
+
+  printf("MSG_SIZE %d\n", msg_size);
+
+  offset+=sizeof(short);
+
+  strcpy(domainName, buffer+offset);
+
+  offset+=strlen(domainName)+1;
+
+  printf("%s\n", domainName);
+
+  memcpy(&entryIPs->IP, &ldaddr(buffer+offset), sizeof(struct in_addr));
+
+  printf("OLD IP: %s\n", inet_ntoa(entryIPs->IP));
+
+  memcpy(&entryIPs->IP, &ldaddr(buffer+offset+sizeof(struct in_addr)), sizeof(struct in_addr));
+
+  printf("NEW IP: %s\n", inet_ntoa(entryIPs->IP));
+
+  exit(0);
+ 
+}
 
 void newIPStruct() {
   struct _IP *ip_struct = malloc(sizeof(struct _IP));

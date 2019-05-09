@@ -125,6 +125,8 @@ void process_menu_option(int s, int option)
 		case MENU_OP_ADD_DOMAIN_IP:
 			process_ADD_DOMAIN_operation(s);
 			break;
+		case MENU_OP_CHANGE:
+			process_CHANGE_DOMAIN_operation(s);
     case MENU_OP_FINISH:
 			sendOpCodeMSG(s,MSG_OP_ERR);
 			exit(0);
@@ -300,6 +302,55 @@ void process_ADD_DOMAIN_operation(int sock) {
 	printf("MESSAGE SENT");
 
 
+}
+
+void process_CHANGE_DOMAIN_operation(int sock) {
+	
+	char buffer[MAX_BUFF_SIZE];
+
+	char* domainName;
+
+	char oldIP[50];
+	char newIP[50];
+
+	char userInput[MAX_BUFF_SIZE];
+
+	int offset = 0;
+
+	printf("Enter domain name: \n");
+	scanf("%s", userInput);
+
+	strcpy(domainName, userInput);
+
+	stshort(MSG_CHANGE_DOMAIN, buffer);
+
+	offset+=sizeof(short);
+
+	strcpy(buffer+offset, domainName);
+
+	offset+=strlen(domainName);
+	offset+=1;
+
+	struct in_addr add, add2;
+
+	printf("Enter old IP: ");
+	scanf("%s", oldIP);
+	inet_aton(oldIP, &add);
+
+	staddr(add, buffer+offset);
+
+	offset+=sizeof(struct in_addr);
+
+	printf("Enter new IP: ");
+	scanf("%s", newIP);
+
+	inet_aton(newIP, &add2);
+
+	staddr(add2, buffer+offset);
+
+	send(sock, buffer, offset, 0);
+
+	
 }
 
 
