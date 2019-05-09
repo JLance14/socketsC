@@ -434,11 +434,31 @@ int process_DOMAIN_RQ_msg(int sock, char* buffer, struct _DNSTable *dnsTable, in
 
 void process_ADD_DOMAIN_msg(int sock, char* buffer, int msg_size, struct _DNSTable *dnsTable) {
   printf("PROCESSING ADD_DOMAIN\n");
-  struct _DNSEntry* newEntry = malloc(sizeof(struct _DNSEntry));
 
+  struct _DNSEntry *newEntry = malloc(sizeof(struct _DNSEntry));
+
+  struct _IP *entryIPList = malloc(sizeof(struct _IP));
+
+  struct _IP *nextEntryIPList = malloc(sizeof(struct _IP));
+
+  
  
 
+  
+
+  /*
+
+  struct _IP* nextIpEntry = malloc(sizeof(struct _IP));
+
+  nextIpEntry = newEntry->first_ip;
+
+  */
+
+  //struct in_addr IPEntry = newEntry->first_ip->IP;
+
   newEntry->nextDNSEntry = NULL;
+
+  
 
   char domainName[NAME_LENGTH];
 
@@ -462,24 +482,33 @@ void process_ADD_DOMAIN_msg(int sock, char* buffer, int msg_size, struct _DNSTab
 
   printf("THERE ARE %d IPs (NE)\n", newEntry->numberOfIPs);
 
-  newEntry->first_ip = NULL;
-
   struct in_addr address;
 
-  struct _IP *IPList;
+  struct in_addr *add;
 
-  IPList = newEntry->first_ip;
+  char *temp;
+
+  
+
+  
 
   for (int i = 0; i < newEntry->numberOfIPs; i++) {
+    
+    memcpy(&entryIPList->IP, &ldaddr(buffer+offset), sizeof(struct in_addr));
 
+  
+    nextEntryIPList = entryIPList->nextIP;
+    
+    memcpy(&nextEntryIPList->IP, &ldaddr(buffer+offset+sizeof(struct in_addr)), sizeof(struct in_addr));
 
+    printf("IP ADDRESS #%d: %s\n", i+1, inet_ntoa(entryIPList->IP));
 
-    address = ldaddr(buffer+offset);
+    printf("NEXT IP: %s\n", inet_ntoa(nextEntryIPList->IP));
 
-
-    printf("IP ADDRESS #%d: %s\n", i+1, inet_ntoa(address));
 
     offset+=sizeof(struct in_addr);
+
+
   }
   
 }  

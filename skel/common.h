@@ -80,7 +80,6 @@ struct _DNSEntry
 struct _DNSTable
 {
   struct _DNSEntry *first_DNSentry;
-
 };
 
 
