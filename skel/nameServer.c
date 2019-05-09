@@ -435,30 +435,20 @@ int process_DOMAIN_RQ_msg(int sock, char* buffer, struct _DNSTable *dnsTable, in
 void process_ADD_DOMAIN_msg(int sock, char* buffer, int msg_size, struct _DNSTable *dnsTable) {
   printf("PROCESSING ADD_DOMAIN\n");
 
+  struct _DNSEntry *ptr = dnsTable->first_DNSentry;
+
   struct _DNSEntry *newEntry = malloc(sizeof(struct _DNSEntry));
 
   struct _IP *entryIPList = malloc(sizeof(struct _IP));
 
   struct _IP *nextEntryIPList = malloc(sizeof(struct _IP));
 
-  
- 
+  struct _IP *tempIP = malloc(sizeof(struct _IP));
+
+
 
   
-
-  /*
-
-  struct _IP* nextIpEntry = malloc(sizeof(struct _IP));
-
-  nextIpEntry = newEntry->first_ip;
-
-  */
-
-  //struct in_addr IPEntry = newEntry->first_ip->IP;
-
   newEntry->nextDNSEntry = NULL;
-
-  
 
   char domainName[NAME_LENGTH];
 
@@ -485,31 +475,57 @@ void process_ADD_DOMAIN_msg(int sock, char* buffer, int msg_size, struct _DNSTab
   struct in_addr address;
 
   struct in_addr *add;
-
-  char *temp;
-
   
-
   
+  //entryIPList = newEntry->first_ip;
 
   for (int i = 0; i < newEntry->numberOfIPs; i++) {
     
     memcpy(&entryIPList->IP, &ldaddr(buffer+offset), sizeof(struct in_addr));
 
-  
     nextEntryIPList = entryIPList->nextIP;
     
     memcpy(&nextEntryIPList->IP, &ldaddr(buffer+offset+sizeof(struct in_addr)), sizeof(struct in_addr));
 
     printf("IP ADDRESS #%d: %s\n", i+1, inet_ntoa(entryIPList->IP));
 
-    printf("NEXT IP: %s\n", inet_ntoa(nextEntryIPList->IP));
+    if (i < newEntry->numberOfIPs-1) {
 
+      memcpy(&nextEntryIPList->IP, &ldaddr(buffer+offset+sizeof(struct in_addr)), sizeof(struct in_addr));
+
+      printf("NEXT IP: %s\n", inet_ntoa(nextEntryIPList->IP));
+
+    } else {
+      printf("NEXT IP: NULL \n");
+
+    }
 
     offset+=sizeof(struct in_addr);
-
-
   }
+
+  struct _DNSEntry *temp = malloc(sizeof(struct _DNSEntry));
+
+  temp = dnsTable->first_DNSentry;
+
+  while (temp != NULL) {
+    printf("DOMAIN NAME OF ENTRY: %s\n", temp->domainName);
+
+    if (temp->nextDNSEntry == NULL) {
+      printf("DOMAIN NAME OF ENTRY: %s\n", temp->domainName);
+      temp->nextDNSEntry = newEntry;
+      temp = newEntry;
+      
+      
+      break;
+    }
+    temp = temp->nextDNSEntry;
+  }
+  
+
+  printDNSTable(dnsTable);
+
+  
+
   
 }  
 
