@@ -436,31 +436,52 @@ void process_ADD_DOMAIN_msg(int sock, char* buffer, int msg_size, struct _DNSTab
   printf("PROCESSING ADD_DOMAIN\n");
   struct _DNSEntry* newEntry = malloc(sizeof(struct _DNSEntry));
 
+ 
+
+  newEntry->nextDNSEntry = NULL;
+
   char domainName[NAME_LENGTH];
 
   int offset = 0;
 
   offset += sizeof(short);
 
-  //msg_size = recv(sock, buffer, sizeof(buffer), 0);
-
   printf("MSG SIZE: %d\n", msg_size);
 
-  strcpy(domainName, buffer+sizeof(short));
+  strcpy(newEntry->domainName, buffer+sizeof(short));
 
-  printf("DOMAIN NAME: %s\n", domainName);
+  printf("DOMAIN NAME OF NEW ENTRY: %s\n", newEntry->domainName);
 
-  offset += strlen(domainName);
+  offset += strlen(newEntry->domainName);
 
   offset += 1;
 
   printf("OFFSET: %d\n", offset);
 
+  newEntry->numberOfIPs = (msg_size-offset)/4;
+
+  printf("THERE ARE %d IPs (NE)\n", newEntry->numberOfIPs);
+
+  newEntry->first_ip = NULL;
+
+  struct in_addr address;
+
+  struct _IP *IPList;
+
+  IPList = newEntry->first_ip;
+
+  for (int i = 0; i < newEntry->numberOfIPs; i++) {
 
 
 
+    address = ldaddr(buffer+offset);
+
+
+    printf("IP ADDRESS #%d: %s\n", i+1, inet_ntoa(address));
+
+    offset+=sizeof(struct in_addr);
+  }
   
-
 }  
 
 
