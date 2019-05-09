@@ -433,16 +433,14 @@ int process_DOMAIN_RQ_msg(int sock, char* buffer, struct _DNSTable *dnsTable, in
 }
 
 void process_ADD_DOMAIN_msg(int sock, char* buffer, int msg_size, struct _DNSTable *dnsTable) {
-  printf("PROCESSING ADD_DOMAIN");
+  printf("PROCESSING ADD_DOMAIN\n");
   struct _DNSEntry* newEntry = malloc(sizeof(struct _DNSEntry));
 
   char domainName[NAME_LENGTH];
 
-  recv(sock, buffer, sizeof(buffer), 0);
+  msg_size = recv(sock, buffer, sizeof(buffer), 0);
 
-	printf("IPs received");
-  
-  printf("HERE");
+  printf("MSG SIZE: %d\n", msg_size);
 
 }  
 

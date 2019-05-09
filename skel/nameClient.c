@@ -126,7 +126,8 @@ void process_menu_option(int s, int option)
 			process_ADD_DOMAIN_operation(s);
 			break;
     case MENU_OP_FINISH:
-      exit(0); 
+			sendOpCodeMSG(s,MSG_OP_ERR);
+			exit(0);
       break;
                 
     default:
@@ -195,8 +196,6 @@ void process_domain(int sock)
 
 	strcpy(buffer + offset, domainName);
 
-	printf("Domain name entered: %s\n", domainName);
-
 	offset+=msg_size;
 
 	send(sock, buffer, sizeof(short)+strlen(domainName)+1, 0);
@@ -247,29 +246,53 @@ void process_ADD_DOMAIN_operation(int sock) {
 
 	int numIP=0;
 
+	char userIn[MAX_HOST_SIZE];
+
 	memset(buffer, '\0', sizeof(buffer));
+
+	stshort(MSG_ADD_DOMAIN, buffer);
+
+	offset+=sizeof(short);
 
 
 	printf("Enter domain name: \n");
 	scanf("%s", newDomain);
+
+	strcpy(buffer+offset, newDomain);
+
+	offset += strlen(newDomain);
+
 	printf("number of IP addresses to add to this domain:\n");
+	scanf("%s", userIn);
 
-	//TODO: ADD ERROR CONTROL 
+	sscanf(userIn, "%d", &numIP);
 
-	scanf("%d", &numIP);
 	printf("Ok, let's add %d IP addresses.\n", numIP);
 
 	
-	char *value;
+	char value[50];
+
+	struct in_addr add;
 
 	
 	printf("Enter IP addresses\n");
 
-
 	for (int i=0; i<numIP; i++) {
 		scanf("%s", value);
-		//printf("value %d: %s \n",&value, i);
+		inet_aton(value, &add);
+	
+		staddr(add, buffer+offset);
+		printf("IP ADDED: %s with offset of : %d\n", value, offset);
+		offset+=sizeof(struct in_addr);
 	}
+
+
+
+	add = ldaddr(buffer+sizeof(short)+strlen(newDomain));
+	
+	printf("TEST -> FIRST IP INSERTED: %s\n", inet_ntoa(add));
+
+
 
 	
 	
