@@ -439,14 +439,13 @@ void process_ADD_DOMAIN_msg(int sock, char* buffer, int msg_size, struct _DNSTab
 
   struct _DNSEntry *newEntry = malloc(sizeof(struct _DNSEntry));
 
+  newEntry->first_ip = NULL;
+
+
+
   struct _IP *entryIPList = malloc(sizeof(struct _IP));
 
   struct _IP *nextEntryIPList = malloc(sizeof(struct _IP));
-
-  struct _IP *tempIP = malloc(sizeof(struct _IP));
-
-
-
   
   newEntry->nextDNSEntry = NULL;
 
@@ -475,11 +474,12 @@ void process_ADD_DOMAIN_msg(int sock, char* buffer, int msg_size, struct _DNSTab
   struct in_addr address;
 
   struct in_addr *add;
-  
-  
-  //entryIPList = newEntry->first_ip;
 
-  for (int i = 0; i < newEntry->numberOfIPs; i++) {
+
+  
+  
+
+  /*for (int i = 0; i < newEntry->numberOfIPs; i++) {
     
     memcpy(&entryIPList->IP, &ldaddr(buffer+offset), sizeof(struct in_addr));
 
@@ -502,25 +502,51 @@ void process_ADD_DOMAIN_msg(int sock, char* buffer, int msg_size, struct _DNSTab
 
     offset+=sizeof(struct in_addr);
   }
+  */
 
-  struct _DNSEntry *temp = malloc(sizeof(struct _DNSEntry));
 
-  temp = dnsTable->first_DNSentry;
+  while (ptr != NULL) {
+    printf("DOMAIN NAME OF ENTRY: %s\n", ptr->domainName);
 
-  while (temp != NULL) {
-    printf("DOMAIN NAME OF ENTRY: %s\n", temp->domainName);
+    if (ptr->nextDNSEntry == NULL) {
 
-    if (temp->nextDNSEntry == NULL) {
-      printf("DOMAIN NAME OF ENTRY: %s\n", temp->domainName);
-      temp->nextDNSEntry = newEntry;
-      temp = newEntry;
+      //ptr->nextDNSEntry = newEntry;
+
+      ptr = newEntry;
+
+      printf("NEW DOMAIN: %s\n", ptr->domainName);
+
       
+
+      for (int i = 0; i<ptr->numberOfIPs; i++) {
+
+        memcpy(&entryIPList->IP, &ldaddr(buffer+offset), sizeof(struct in_addr));
+
+        ptr->first_ip = entryIPList;
+
+        printf("pointer 1st IP: %s\n", inet_ntoa(ptr->first_ip->IP));
+
+        offset+=sizeof(struct in_addr);
+
+        memcpy(&nextEntryIPList->IP, &ldaddr(buffer+offset), sizeof(struct in_addr));
+
+        ptr->first_ip->nextIP = nextEntryIPList;
+
+        if (i < ptr->numberOfIPs-1) {
+
+        printf("NEXT IP: %s\n", inet_ntoa(ptr->first_ip->nextIP->IP));
+
+        } else {
+          printf("NEXT IP: NULL\n");
+        }
       
+      }
       break;
     }
-    temp = temp->nextDNSEntry;
+    ptr = ptr->nextDNSEntry;
   }
   
+
 
   printDNSTable(dnsTable);
 
