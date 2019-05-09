@@ -438,9 +438,28 @@ void process_ADD_DOMAIN_msg(int sock, char* buffer, int msg_size, struct _DNSTab
 
   char domainName[NAME_LENGTH];
 
-  msg_size = recv(sock, buffer, sizeof(buffer), 0);
+  int offset = 0;
+
+  offset += sizeof(short);
+
+  //msg_size = recv(sock, buffer, sizeof(buffer), 0);
 
   printf("MSG SIZE: %d\n", msg_size);
+
+  strcpy(domainName, buffer+sizeof(short));
+
+  printf("DOMAIN NAME: %s\n", domainName);
+
+  offset += strlen(domainName);
+
+  offset += 1;
+
+  printf("OFFSET: %d\n", offset);
+
+
+
+
+  
 
 }  
 

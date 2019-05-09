@@ -261,6 +261,7 @@ void process_ADD_DOMAIN_operation(int sock) {
 	strcpy(buffer+offset, newDomain);
 
 	offset += strlen(newDomain);
+	offset += 1;
 
 	printf("number of IP addresses to add to this domain:\n");
 	scanf("%s", userIn);
@@ -288,18 +289,13 @@ void process_ADD_DOMAIN_operation(int sock) {
 
 
 
-	add = ldaddr(buffer+sizeof(short)+strlen(newDomain));
+	add = ldaddr(buffer+sizeof(short)+strlen(newDomain)+1);
 	
 	printf("TEST -> FIRST IP INSERTED: %s\n", inet_ntoa(add));
 
-
-
+	//sendOpCodeMSG(sock, MSG_ADD_DOMAIN);
 	
-	
-
-	sendOpCodeMSG(sock, MSG_ADD_DOMAIN);
-	
-	send(sock, buffer, offset+1, 0);
+	send(sock, buffer, offset, 0);
 
 	printf("MESSAGE SENT");
 
