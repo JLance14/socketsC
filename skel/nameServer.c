@@ -358,10 +358,10 @@ void process_LIST_RQ_msg(int sock, struct _DNSTable *dnsTable)
 
 int process_DOMAIN_RQ_msg(int sock, char* buffer, struct _DNSTable *dnsTable, int rcv)
 {
+  int counter=0;
+  int offset=0;
   struct _DNSEntry *ptr = dnsTable->first_DNSentry;
-
   int numOfEntries = sizeof(dnsTable) / sizeof(short);
-
   int msg_size=0;
 
   char *domainRequested;
@@ -372,57 +372,51 @@ int process_DOMAIN_RQ_msg(int sock, char* buffer, struct _DNSTable *dnsTable, in
 
   domainRequested = buffer + sizeof(short); 
 
-  if (rcv > 2) { // Si el domain ha llegado al servidor
-  
-      printf("domain Requested: %s\n", domainRequested);
+       
+  struct in_addr addr;
 
-      printf("dns_table_size: %d\n", numOfEntries);
-      
-      struct in_addr addr;
+  stshort(MSG_DOMAIN, replyBuffer);
 
+  offset+=sizeof(short);
 
+  struct _IP* temp;
 
-      int counter=0;
+  temp = dnsTable->first_DNSentry->first_ip;
+    while (ptr != NULL) {
+      printf("Website name: %s\n", ptr->domainName);
+      if (strcmp(ptr->domainName, domainRequested) == 0) {
+        printf("found\n");
+        domainFound = 1;
 
-      int offset=0;
-
-      stshort(MSG_DOMAIN, replyBuffer);
-
-      offset+=sizeof(short);
-
-      struct _IP* temp;
-
-      temp = ptr->first_ip;
-
-      while (ptr != NULL) {
-        printf("Website name: %s\n", ptr->domainName);
-        if (strcmp(ptr->domainName, domainRequested) == 0) {
-          printf("found\n");
-          domainFound = 1;
-
-          while(ptr->first_ip != NULL) {
-            counter++;
+        while(ptr->first_ip != NULL) {
+          counter++;
             
+          struct in_addr address;
+
+          printf("IP #%d for this address: %s\n", counter, inet_ntoa(ptr->first_ip->IP));
+
+          address = ptr->first_ip->IP;
+
+          staddr(address, replyBuffer+offset);
+
+          offset+=sizeof(struct in_addr);
             
-            struct in_addr address;
-
-            printf("IP #%d for this address: %s\n", counter, inet_ntoa(ptr->first_ip->IP));
-
-            address = ptr->first_ip->IP;
-
-            staddr(address, replyBuffer+offset);
-
-            offset+=sizeof(struct in_addr);
-            
-            ptr->first_ip = ptr->first_ip->nextIP;
+          ptr->first_ip = ptr->first_ip->nextIP;
         }
         break;
-          } else {
-          printf("searching for: %s\n", domainRequested);
+      } else {
           ptr = ptr->nextDNSEntry;
         }  
-      }
+    }
+
+    addr = ldaddr(replyBuffer+2);
+
+    printf("reply buffer first address : %s\n", inet_ntoa(addr));
+
+    addr = ldaddr(replyBuffer+6);
     
+    printf("reply buffer first address : %s\n", inet_ntoa(addr));
+
     if (domainFound == 0) {
       sendOpCodeMSG(sock, MSG_OP_ERR);
     }
@@ -431,11 +425,10 @@ int process_DOMAIN_RQ_msg(int sock, char* buffer, struct _DNSTable *dnsTable, in
 
 
     printf("NUMBER OF IPs FOR THIS ADDRESS: %d\n", counter);
-
-  }
 }
 
 void process_ADD_DOMAIN_msg(int sock, char* buffer, int msg_size, struct _DNSTable *dnsTable) {
+
   printf("PROCESSING ADD_DOMAIN\n");
 
   struct _DNSEntry *ptr = dnsTable->first_DNSentry;
@@ -484,6 +477,8 @@ void process_ADD_DOMAIN_msg(int sock, char* buffer, int msg_size, struct _DNSTab
 
       ptr->nextDNSEntry = newEntry;
 
+      newEntry->first_ip = entryIPList;
+
       printf("NEW DOMAIN: %s\n", ptr->nextDNSEntry->domainName);
 
       memcpy(&entryIPList->IP, &ldaddr(buffer+offset), sizeof(struct in_addr));
@@ -500,48 +495,140 @@ void process_ADD_DOMAIN_msg(int sock, char* buffer, int msg_size, struct _DNSTab
   
 }  
 
-process_CHANGE_DOMAIN_msg(int sock, char* buffer, int msg_size, struct _DNSTable dnsTable) {
+void process_CHANGE_DOMAIN_msg(int sock, char* buffer, int msg_size, struct _DNSTable *dnsTable) {
 
-  struct _IP *entryIPs = malloc(sizeof(struct _IP));
+  struct _DNSEntry *ptr = malloc(sizeof(struct _DNSEntry));
 
-  struct _IP *entry2 = malloc(sizeof(struct _IP));
+  struct _IP *entryIP1 = malloc(sizeof(struct _IP));
 
+  struct _IP *entryIP2 = malloc(sizeof(struct _IP));
 
+  struct in_addr address;
 
+  int domainFound = 0;
+  int counter = 0;
+  int IPfound = 0;
   int offset = 0;
-
   struct in_addr addrOld, addrNew;
-
-  char domainName[MAX_BUFF_SIZE];
-
-
-  printf("MSG_SIZE %d\n", msg_size);
+  char domain[MAX_BUFF_SIZE];
 
   offset+=sizeof(short);
 
-  strcpy(domainName, buffer+offset);
+  strcpy(domain, buffer+offset);
 
-  offset+=strlen(domainName)+1;
+  offset+=strlen(domain)+1;
 
-  printf("%s\n", domainName);
+  searchDomain(domain, dnsTable);
 
-  memcpy(&entryIPs->IP, &ldaddr(buffer+offset), sizeof(struct in_addr));
+  printf("MSG SIZE %d\n", msg_size);
 
-  printf("OLD IP: %s\n", inet_ntoa(entryIPs->IP));
+  addrOld = ldaddr(buffer+offset);
 
-  memcpy(&entryIPs->IP, &ldaddr(buffer+offset+sizeof(struct in_addr)), sizeof(struct in_addr));
+  entryIP1->IP = addrOld;
 
-  printf("NEW IP: %s\n", inet_ntoa(entryIPs->IP));
+  offset+=sizeof(struct in_addr);
 
-  exit(0);
- 
+  addrNew = ldaddr(buffer+offset);
+
+  printf("DOMAIN %s\n", dnsTable->first_DNSentry->domainName);
+
+  printf("ADDR OLD: %s\n", inet_ntoa(entryIP1->IP));
+
+  entryIP2->IP = addrNew;
+
+  printf("NEW IP: %s\n", inet_ntoa(entryIP2->IP));
+
+  ptr = dnsTable->first_DNSentry;
+
+  struct _IP* temp = malloc(sizeof(struct _IP));;
+
+  //temp = dnsTable->first_DNSentry->first_ip;
+    while (ptr != NULL) {
+      printf("Website name: %s\n", ptr->domainName);
+      if (strcmp(ptr->domainName, domain) == 0) {
+
+        temp = ptr->first_ip;
+
+        printf("Domain found\n");
+        domainFound = 1;
+
+        while(ptr->first_ip != NULL) {
+          counter++;
+
+          address = ptr->first_ip->IP;
+
+          if (address.s_addr == addrOld.s_addr) {
+
+            printf("FOUND 2\n");
+
+            ptr->first_ip->IP = addrNew;
+
+            /*if (ptr->first_ip->nextIP == NULL) {
+              temp = ptr->first_ip->nextIP;
+
+              temp->IP = addrNew;
+
+              
+            }*/
+            
+            IPfound = 1;
+
+            printf("IP FOUND AND CHANGED\n");
+
+            printDNSTable(dnsTable);
+
+            //printf("%s\n", inet_ntoa(ptr->first_ip->IP));
+
+            ptr->first_ip->IP = addrNew;
+
+            offset+=sizeof(struct in_addr);
+
+
+          }
+          //ptr->first_ip = ptr->first_ip->nextIP;
+        //printf("IP #%d for this address: %s\n", counter, inet_ntoa(ptr->first_ip->IP));
+        }
+        break;
+      } else {
+          ptr = ptr->nextDNSEntry;
+        }  
+    }
+
+    if (domainFound == 0) {
+      printf("DOMAIN NOT FOUND\n");
+      sendOpCodeMSG(sock, MSG_OP_ERR);
+    }
+
+    if (IPfound == 0) {
+      printf("IP NOT FOUND. NO IP MODIFIED\n");
+    }
+  exit(0); 
 }
 
-void newIPStruct() {
-  struct _IP *ip_struct = malloc(sizeof(struct _IP));
+int searchDomain(char* domain, struct _DNSTable *dnsTable) {
 
+  struct _DNSEntry *pointer = malloc(sizeof(struct _DNSEntry));
+
+  pointer = dnsTable->first_DNSentry;
+
+  int found = 0;
+
+  while (pointer != NULL) {
+
+    printf("SEARCHING FOR: %s\n", domain);
+
+    printf("Domain : %s\n", pointer->domainName);
+
+    if (strcmp(pointer->domainName, domain) == 0) {
+      printf("DOMAIN FOUND\n");
+      found = 1;
+      return found;
+    }
+
+    pointer = pointer->nextDNSEntry;
+  }
+  return found;
 }
-
 
 int main (int argc, char * argv[])
 {

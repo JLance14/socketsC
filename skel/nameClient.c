@@ -174,15 +174,11 @@ void process_domain(int sock)
 {
 	int offset=0;
 	int msg_size=0;
-
 	char *domainName;
-
 	char userInput[MAX_BUFF_SIZE];
-
 	char buffer[MAX_BUFF_SIZE];
 
 	memset(buffer, '\0',sizeof(buffer));
-
 	sendOpCodeMSG(sock, MSG_DOMAIN_RQ);
 
 	printf("Domain name to search: ");
@@ -206,13 +202,9 @@ void process_domain(int sock)
 
 	memset(buffer, '\0', sizeof(buffer));
 
-	printf("RECEIVING MESSAGE \n");
-
 	msg_size = recv(sock, buffer, sizeof(buffer), 0);
 
 	printf("RECEIVED MESSAGE of size: %d\n", msg_size);
-
-	printf("SIZE OF BUFFER : %d\n", sizeof(buffer));
 
 	int numDomains = msg_size/sizeof(struct in_addr);
 
@@ -305,6 +297,8 @@ void process_ADD_DOMAIN_operation(int sock) {
 }
 
 void process_CHANGE_DOMAIN_operation(int sock) {
+
+	struct in_addr addrOld, addrNew;
 	
 	char buffer[MAX_BUFF_SIZE];
 
@@ -322,11 +316,9 @@ void process_CHANGE_DOMAIN_operation(int sock) {
 
 	strcpy(domainName, userInput);
 
-	stshort(MSG_CHANGE_DOMAIN, buffer);
-
 	offset+=sizeof(short);
 
-	strcpy(buffer+offset, domainName);
+	int msg_size = sizeof(short) + strlen(domainName) + 1 + 8;
 
 	offset+=strlen(domainName);
 	offset+=1;
@@ -337,16 +329,25 @@ void process_CHANGE_DOMAIN_operation(int sock) {
 	scanf("%s", oldIP);
 	inet_aton(oldIP, &add);
 
-	staddr(add, buffer+offset);
-
-	offset+=sizeof(struct in_addr);
+	offset+=sizeof(sizeof(add));
 
 	printf("Enter new IP: ");
 	scanf("%s", newIP);
 
 	inet_aton(newIP, &add2);
 
-	staddr(add2, buffer+offset);
+	addrOld = ldaddr(buffer+2+strlen(domainName)+1);
+
+	addrNew = ldaddr(buffer+2+strlen(domainName)+1+sizeof(struct in_addr));
+
+	stshort(MSG_CHANGE_DOMAIN, buffer);
+
+	strcpy(buffer+2, domainName);
+
+	staddr(add, buffer+2+strlen(domainName) + 1);
+	
+	staddr(add2, buffer+2+strlen(domainName) + 1 + sizeof(add));
+
 
 	send(sock, buffer, offset, 0);
 
