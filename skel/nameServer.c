@@ -552,25 +552,15 @@ void process_CHANGE_DOMAIN_msg(int sock, char* buffer, int msg_size, struct _DNS
         printf("Domain found\n");
         domainFound = 1;
 
-        while(ptr->first_ip != NULL) {
-          counter++;
+        while(temp != NULL) {
+          
 
-          address = ptr->first_ip->IP;
+          address = temp->IP;
 
           if (address.s_addr == addrOld.s_addr) {
 
-            printf("FOUND 2\n");
+            temp->IP = addrNew;
 
-            ptr->first_ip->IP = addrNew;
-
-            /*if (ptr->first_ip->nextIP == NULL) {
-              temp = ptr->first_ip->nextIP;
-
-              temp->IP = addrNew;
-
-              
-            }*/
-            
             IPfound = 1;
 
             printf("IP FOUND AND CHANGED\n");
@@ -585,7 +575,7 @@ void process_CHANGE_DOMAIN_msg(int sock, char* buffer, int msg_size, struct _DNS
 
 
           }
-          //ptr->first_ip = ptr->first_ip->nextIP;
+          temp = temp->nextIP;
         //printf("IP #%d for this address: %s\n", counter, inet_ntoa(ptr->first_ip->IP));
         }
         break;
