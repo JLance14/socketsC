@@ -530,19 +530,6 @@ void process_ADD_DOMAIN_msg(int sock, char* buffer, int msg_size, struct _DNSTab
 
   printf("MSG OF SIZE: %d\n", msg_size);
 
-  /*for (int i = 1; i < newEntry->numberOfIPs; i++) {
-    address = ldaddr(buffer+offset);
-    newIPList->IP = address;
-    offset+=sizeof(struct in_addr);
-    printf("%s\n", inet_ntoa(newIPList->IP));
-    newIPList->nextIP = nextIPList;
-  }
-
-  address = ldaddr(buffer+offset);
-  newIPList->IP = address;
-  printf("LAST IP: %s\n", inet_ntoa(newIPList->IP));
-  newIPList->nextIP = NULL;*/
-
   while(ptr->nextDNSEntry != NULL && found == 0) {
     printf("%s OK\n", ptr->domainName);
 
@@ -566,6 +553,7 @@ void process_ADD_DOMAIN_msg(int sock, char* buffer, int msg_size, struct _DNSTab
 
       while (offset < msg_size) {
         address = ldaddr(buffer+offset);
+        printf("IP: %s\n", inet_ntoa(address));
         newIPList->IP = address;
         newIPList->nextIP = nextIPList;
         newIPList = nextIPList;
