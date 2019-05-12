@@ -427,16 +427,11 @@ int process_DOMAIN_RQ_msg(int sock, char* buffer, struct _DNSTable *dnsTable, in
     printf("NUMBER OF IPs FOR THIS ADDRESS: %d\n", counter);
 }
 
-void process_ADD_DOMAIN_msg(int sock, char* buffer, int msg_size, struct _DNSTable *dnsTable) {
-
+/*void process_ADD_DOMAIN_msg(int sock, char* buffer, int msg_size, struct _DNSTable *dnsTable) {
   struct in_addr address;
-
   struct in_addr *add;
-
   printf("PROCESSING ADD_DOMAIN\n");
-
   struct _DNSEntry *ptr = dnsTable->first_DNSentry;
-
   struct _DNSEntry *newEntry = malloc(sizeof(struct _DNSEntry));
 
   newEntry = dnsTable->first_DNSentry;
@@ -498,7 +493,94 @@ void process_ADD_DOMAIN_msg(int sock, char* buffer, int msg_size, struct _DNSTab
   ptr = ptr->nextDNSEntry;
   printDNSTable(dnsTable);
   
-}  
+}*/
+
+void process_ADD_DOMAIN_msg(int sock, char* buffer, int msg_size, struct _DNSTable *dnsTable) {
+
+  struct _DNSEntry *newEntry = malloc(sizeof(struct _DNSEntry));
+  struct _DNSEntry *ptr = dnsTable->first_DNSentry;
+  struct _IP *newIPList = malloc(sizeof(struct _IP));
+  struct _IP *nextIPList = malloc(sizeof(struct _IP));
+  struct in_addr address;
+  int offset = 0;
+  int found = 0;
+  char domain[MAX_BUFF_SIZE];
+
+  newEntry->nextDNSEntry = NULL;
+  newEntry->first_ip = newIPList;
+  newIPList->nextIP = nextIPList;
+
+  offset += sizeof(short);
+
+  strcpy(domain, buffer+offset);
+
+  strcpy(newEntry->domainName,buffer+offset);
+
+  offset += strlen(newEntry->domainName);
+  offset += 1;
+
+  newEntry->numberOfIPs = ((msg_size-offset)/sizeof(struct in_addr));
+  printf("NUMBER OF IPS: %d\n", newEntry->numberOfIPs);
+  
+  printf("DOMAIN NEW ENTRY %s\n", newEntry->domainName);
+  
+
+  printf("NEW IP: %s\n",inet_ntoa(newIPList->IP));
+
+
+  printf("MSG OF SIZE: %d\n", msg_size);
+
+  /*for (int i = 1; i < newEntry->numberOfIPs; i++) {
+    address = ldaddr(buffer+offset);
+    newIPList->IP = address;
+    offset+=sizeof(struct in_addr);
+    printf("%s\n", inet_ntoa(newIPList->IP));
+    newIPList->nextIP = nextIPList;
+  }
+
+  address = ldaddr(buffer+offset);
+  newIPList->IP = address;
+  printf("LAST IP: %s\n", inet_ntoa(newIPList->IP));
+  newIPList->nextIP = NULL;*/
+
+  while(ptr->nextDNSEntry != NULL && found == 0) {
+    printf("%s OK\n", ptr->domainName);
+
+    
+
+    ptr = ptr->nextDNSEntry;
+
+    if (ptr->nextDNSEntry == NULL && found == 0) {
+
+      printf("%s LAST\n", ptr->domainName);
+
+      //ptr->nextDNSEntry = malloc(sizeof(struct _DNSEntry));
+
+      ptr->nextDNSEntry = newEntry;
+
+      //strcpy(newEntry->domainName, domain);
+
+      printf("OKI %s\n", newEntry->domainName);
+
+      newEntry->first_ip = newIPList;
+
+      while (offset < msg_size) {
+        address = ldaddr(buffer+offset);
+        newIPList->IP = address;
+        newIPList->nextIP = nextIPList;
+        newIPList = nextIPList;
+        offset+=sizeof(struct in_addr);
+        printf("OFFSET %d\n", offset);
+      }
+      newIPList->nextIP = NULL;
+
+      found = 1;
+    }
+  }
+
+  printDNSTable(dnsTable);
+
+}
 
 void process_CHANGE_DOMAIN_msg(int sock, char* buffer, int msg_size, struct _DNSTable *dnsTable) {
 
