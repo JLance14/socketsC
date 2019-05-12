@@ -429,11 +429,17 @@ int process_DOMAIN_RQ_msg(int sock, char* buffer, struct _DNSTable *dnsTable, in
 
 void process_ADD_DOMAIN_msg(int sock, char* buffer, int msg_size, struct _DNSTable *dnsTable) {
 
+  struct in_addr address;
+
+  struct in_addr *add;
+
   printf("PROCESSING ADD_DOMAIN\n");
 
   struct _DNSEntry *ptr = dnsTable->first_DNSentry;
 
   struct _DNSEntry *newEntry = malloc(sizeof(struct _DNSEntry));
+
+  newEntry = dnsTable->first_DNSentry;
 
   newEntry->first_ip = NULL;
 
@@ -460,37 +466,36 @@ void process_ADD_DOMAIN_msg(int sock, char* buffer, int msg_size, struct _DNSTab
 
   offset += 1;
 
-  printf("OFFSET: %d\n", offset);
-
   newEntry->numberOfIPs = (msg_size-offset)/4;
 
-  printf("THERE ARE %d IPs (NE)\n", newEntry->numberOfIPs);
+  printf("THERE ARE %d IPs\n", newEntry->numberOfIPs);
 
-  struct in_addr address;
-
-  struct in_addr *add;
-
-  while (ptr != NULL) {
+  while (ptr->nextDNSEntry != NULL) {
     printf("DOMAIN NAME OF ENTRY: %s\n", ptr->domainName);
+    
+  }
 
-    if (ptr->nextDNSEntry == NULL) {
+  if (ptr->nextDNSEntry == NULL) {
+
+
 
       ptr->nextDNSEntry = newEntry;
 
+      printf("NEW DOMAIN (PUNT): %s\n", ptr->domainName);
+
+      entryIPList->IP = ldaddr(buffer+offset);
+
+      printf("IP OF : %s", inet_ntoa(entryIPList->IP));
+
       newEntry->first_ip = entryIPList;
-
-      printf("NEW DOMAIN: %s\n", ptr->nextDNSEntry->domainName);
-
-      memcpy(&entryIPList->IP, &ldaddr(buffer+offset), sizeof(struct in_addr));
+      
+      //memcpy(&entryIPList->IP, &ldaddr(buffer+offset), sizeof(struct in_addr));
 
       printf("pointer 1st IP: %s\n", inet_ntoa(entryIPList->IP));
 
-      break;
-
     }
-    ptr = ptr->nextDNSEntry;
-  }
   
+  ptr = ptr->nextDNSEntry;
   printDNSTable(dnsTable);
   
 }  
@@ -567,8 +572,6 @@ void process_CHANGE_DOMAIN_msg(int sock, char* buffer, int msg_size, struct _DNS
 
             printDNSTable(dnsTable);
 
-            //printf("%s\n", inet_ntoa(ptr->first_ip->IP));
-
             ptr->first_ip->IP = addrNew;
 
             offset+=sizeof(struct in_addr);
@@ -576,7 +579,6 @@ void process_CHANGE_DOMAIN_msg(int sock, char* buffer, int msg_size, struct _DNS
 
           }
           temp = temp->nextIP;
-        //printf("IP #%d for this address: %s\n", counter, inet_ntoa(ptr->first_ip->IP));
         }
         break;
       } else {
