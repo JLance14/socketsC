@@ -125,6 +125,9 @@ void process_menu_option(int s, int option)
 		case MENU_OP_ADD_DOMAIN_IP:
 			process_ADD_DOMAIN_operation(s);
 			break;
+		case MENU_OP_ADD_DOMAIN_IPS:
+			process_ADD_DOMAIN_operation(s);
+			break;
 		case MENU_OP_CHANGE:
 			process_CHANGE_DOMAIN_operation(s);
 			break;
@@ -325,9 +328,6 @@ void process_CHANGE_DOMAIN_operation(int sock) {
 
 	strcpy(buffer+offset, domainName);
 
-
-
-
 	offset+=strlen(domainName);
 	offset+=1;
 
@@ -344,19 +344,15 @@ void process_CHANGE_DOMAIN_operation(int sock) {
 
 	inet_aton(newIP, &add2);
 
-	//addrOld = ldaddr(buffer+2+strlen(domainName)+1);
-
 	addrOld = ldaddr(buffer+offset);
+
+	
 
 	offset+=sizeof(sizeof(add));
 
-	addrNew = ldaddr(buffer+2+strlen(domainName)+1+sizeof(struct in_addr));
-
-
-
 	staddr(add, buffer+2+strlen(domainName) + 1);
 	
-	staddr(add2, buffer+2+strlen(domainName) + 1 + sizeof(add));
+	staddr(add2, buffer+2+strlen(domainName)+ 1 + sizeof(add));
 
 	send(sock, buffer, offset, 0);
 
@@ -369,8 +365,6 @@ void process_CHANGE_DOMAIN_operation(int sock) {
 	} else {
 		printf("DOMAIN UPDATED");
 	}
-
-
 }
 
 void process_DELETE_DOMAIN_operation(int sock) {
@@ -454,9 +448,7 @@ while(1){
 		  process_menu_option(s, option)                  ;
 
 	  }while(option != MENU_OP_FINISH); //end while(opcio)
-		printf("CLOSING\n");
-    close(s);
-		kill(0,0);
+  	close(s);
 }
   return 0;
 }

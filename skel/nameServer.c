@@ -635,6 +635,8 @@ int process_DEL_DOMAIN_msg(int sock, char* buffer, int msg_size, struct _DNSTabl
   }
 }
 
+
+
 int searchDomain(char* domain, struct _DNSTable *dnsTable) {
 
   struct _DNSEntry *pointer = malloc(sizeof(struct _DNSEntry));
