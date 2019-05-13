@@ -472,6 +472,11 @@ void process_ADD_DOMAIN_msg(int sock, char* buffer, int msg_size, struct _DNSTab
 
         ptr->nextDNSEntry = newEntry;
 
+        if (newEntry->numberOfIPs == 0) {
+          newEntry->first_ip = NULL; 
+          break;
+        }
+
         newEntry->first_ip = newIPList;
 
         for (int i = 0; i<newEntry->numberOfIPs; i++) {
