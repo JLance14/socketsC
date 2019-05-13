@@ -429,7 +429,7 @@ void process_ADD_DOMAIN_msg(int sock, char* buffer, int msg_size, struct _DNSTab
   int found = 0;
   char domain[MAX_BUFF_SIZE];
   int firstIP = 1;
-  int count = 0;
+  int domainFound = 0;
 
   newEntry->nextDNSEntry = NULL;
   newEntry->first_ip = newIPList;
@@ -454,45 +454,48 @@ void process_ADD_DOMAIN_msg(int sock, char* buffer, int msg_size, struct _DNSTab
 
   printf("MSG OF SIZE: %d\n", msg_size);
 
-  while(ptr->nextDNSEntry != NULL && found == 0) {
-    printf("%s OK\n", ptr->domainName);
+  domainFound = searchDomain(domain, dnsTable);
 
-    
+  if (domainFound == 1) {
+    sendOpCodeMSG(sock, MSG_OP_ERR);
+  } else { 
+    sendOpCodeMSG(sock, MSG_ADD_DOMAIN);
 
-    ptr = ptr->nextDNSEntry;
+    while(ptr->nextDNSEntry != NULL && found == 0) {
+      printf("%s OK\n", ptr->domainName);
 
-    if (ptr->nextDNSEntry == NULL && found == 0) {
+      
 
-      ptr->nextDNSEntry = newEntry;
+      ptr = ptr->nextDNSEntry;
 
-      newEntry->first_ip = newIPList;
+      if (ptr->nextDNSEntry == NULL && found == 0) {
 
-      for (int i = 0; i<newEntry->numberOfIPs; i++) {
-        temp = malloc(sizeof(struct _IP));
-        address = ldaddr(buffer+offset);
-        offset+=sizeof(struct in_addr);
-        newIPList->IP = address;
+        ptr->nextDNSEntry = newEntry;
 
-        printf("IP %i: %s\n", i+1, inet_ntoa(newIPList->IP));
-        address = ldaddr(buffer+offset);
-        temp->IP = address;
-        
-        printf("IP %i: %s\n", i+2, inet_ntoa(temp->IP));
-        newIPList->nextIP = temp;
-        newIPList = newIPList->nextIP;
-        i++;  
+        newEntry->first_ip = newIPList;
+
+        for (int i = 0; i<newEntry->numberOfIPs; i++) {
+          temp = malloc(sizeof(struct _IP));
+          address = ldaddr(buffer+offset);
+          offset+=sizeof(struct in_addr);
+          newIPList->IP = address;
+
+          printf("IP %i: %s\n", i+1, inet_ntoa(newIPList->IP));
+          address = ldaddr(buffer+offset);
+          temp->IP = address;
+          
+          printf("IP %i: %s\n", i+2, inet_ntoa(temp->IP));
+          newIPList->nextIP = temp;
+          newIPList = newIPList->nextIP;
+          i++;  
+        }
+        newIPList->nextIP = NULL;
+        found = 1;
       }
-      newIPList->nextIP = NULL;
-      found = 1;
     }
   }
-
   printDNSTable(dnsTable);
-
 }
-
-
-
 
 void process_CHANGE_DOMAIN_msg(int sock, char* buffer, int msg_size, struct _DNSTable *dnsTable) {
 
@@ -608,8 +611,6 @@ int process_DEL_DOMAIN_msg(int sock, char* buffer, int msg_size, struct _DNSTabl
         ptr = NULL;
         break;
       } else {
-
-
         temp = ptr->nextDNSEntry;
         printf("%s\n", ptr->domainName);
         if (strcmp(temp->domainName, domainName) == 0) {
@@ -655,7 +656,7 @@ int main (int argc, char * argv[])
   int port ;
   char dns_file[MAX_FILE_NAME_SIZE];
   int finish = 0;
-  
+  pid_t pid;
   
 
   getProgramOptions(argc, argv, dns_file, &port);
@@ -685,8 +686,7 @@ int main (int argc, char * argv[])
     printf("Binding succesful\n");
   };
 
- 
-
+  
   while(1) {
 
     listen(sServer,MAX_QUEUED_CON);
@@ -695,25 +695,24 @@ int main (int argc, char * argv[])
     
     sClient = accept(sServer, (struct sockaddr *)&client_addr, &client_addr_len);
 
-        printf("CONNECTION ACCEPTED\n");
-        /*
+    if (sClient < 0) {
+      perror("Failed");
+      exit(-1);
+    }
 
-        Concurrencia
+    if (fork() == 0) {
+      do
+      {
+        finish = process_msg(sClient, dnsTable);
+      } while(!finish);
+      close(sClient);
+      exit(0);
+        
+    }
 
-        if (pid = fork() == 0) {
+    close(sClient);
 
-        }
-
-        */
-        printf("Listening \n");
-
-         do
-          {
-            finish = process_msg(sClient, dnsTable);
-         } while(!finish);
-          //close(sClient);
-         exit(0);
-    
+       
   }
   
   return 0;

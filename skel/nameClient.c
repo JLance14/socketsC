@@ -132,7 +132,7 @@ void process_menu_option(int s, int option)
 			process_DELETE_DOMAIN_operation(s);
 			break;
     case MENU_OP_FINISH:
-			sendOpCodeMSG(s,MSG_OP_ERR);
+			sendOpCodeMSG(s,MSG_FINISH);
 			exit(0);
       break;
                 
@@ -241,6 +241,8 @@ void process_ADD_DOMAIN_operation(int sock) {
 
 	char userIn[MAX_HOST_SIZE];
 
+	unsigned short opCode;
+
 	memset(buffer, '\0', sizeof(buffer));
 
 	stshort(MSG_ADD_DOMAIN, buffer);
@@ -290,8 +292,15 @@ void process_ADD_DOMAIN_operation(int sock) {
 	
 	send(sock, buffer, offset, 0);
 
-	printf("MESSAGE SENT");
+	recv(sock,buffer, sizeof(buffer), 0);	
 
+	opCode = ldshort(buffer);
+
+	if (opCode == 12) {
+		printf("DOMAIN ALREADY EXISTS\n");
+	} else {
+		printf("DOMAIN ADDED");
+	}
 
 }
 
@@ -445,7 +454,9 @@ while(1){
 		  process_menu_option(s, option)                  ;
 
 	  }while(option != MENU_OP_FINISH); //end while(opcio)
+		printf("CLOSING\n");
     close(s);
+		kill(0,0);
 }
   return 0;
 }
