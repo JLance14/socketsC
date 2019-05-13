@@ -308,6 +308,7 @@ void process_CHANGE_DOMAIN_operation(int sock) {
 	char oldIP[50];
 	char newIP[50];
 	char domainName[MAX_BUFF_SIZE];
+	unsigned short opCode;
 
 	int offset = 0;
 
@@ -333,14 +334,18 @@ void process_CHANGE_DOMAIN_operation(int sock) {
 	scanf("%s", oldIP);
 	inet_aton(oldIP, &add);
 
-	offset+=sizeof(sizeof(add));
+	
 
 	printf("Enter new IP: ");
 	scanf("%s", newIP);
 
 	inet_aton(newIP, &add2);
 
-	addrOld = ldaddr(buffer+2+strlen(domainName)+1);
+	//addrOld = ldaddr(buffer+2+strlen(domainName)+1);
+
+	addrOld = ldaddr(buffer+offset);
+
+	offset+=sizeof(sizeof(add));
 
 	addrNew = ldaddr(buffer+2+strlen(domainName)+1+sizeof(struct in_addr));
 
@@ -352,24 +357,35 @@ void process_CHANGE_DOMAIN_operation(int sock) {
 
 	send(sock, buffer, offset, 0);
 
+	recv(sock,buffer, sizeof(buffer), 0);	
+
+	opCode = ldshort(buffer);
+
+	if (opCode == 12) {
+		printf("DOMAIN OR IP DOESN'T EXIST\n");
+	} else {
+		printf("DOMAIN UPDATED");
+	}
+
+
 }
 
 void process_DELETE_DOMAIN_operation(int sock) {
-	printf("PROCESSING DELETE DOMAIN");
-
 	char buffer[MAX_BUFF_SIZE];
 	int offset = 0;
-	char* domainName;
+	char domainName[MAX_BUFF_SIZE];
 
 	stshort(MSG_DEL_DOMAIN, buffer);
 	offset+=sizeof(short);
 
-	printf("Enter domain name: \n");
+	printf("Enter domain name to delete: \n");
+	scanf("%s", domainName);
 
+	strcpy(buffer+offset, domainName);
+	offset+=strlen(domainName);
+	offset+=1;
 
-
-
-
+	send(sock, buffer, offset, 0);
 }
 
 

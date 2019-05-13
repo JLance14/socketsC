@@ -291,9 +291,11 @@ int process_msg(int sock, struct _DNSTable *dnsTable)
     case MSG_CHANGE_DOMAIN:
       process_CHANGE_DOMAIN_msg(sock, buffer, msg_size, dnsTable);
       break;      
+    case MSG_DEL_DOMAIN:
+      process_DEL_DOMAIN_msg(sock, buffer, msg_size, dnsTable);
+      break;
     case MSG_FINISH:
       done = 1;
-      exit(0);
       break;
     default:exit(0);
       perror("Message code does not exist.\n");
@@ -377,40 +379,40 @@ int process_DOMAIN_RQ_msg(int sock, char* buffer, struct _DNSTable *dnsTable, in
     sendOpCodeMSG(sock, MSG_OP_ERR);
   } else {
 
-  stshort(MSG_DOMAIN, replyBuffer);
+    stshort(MSG_DOMAIN, replyBuffer);
 
-  offset+=sizeof(short);
+    offset+=sizeof(short);
 
-  struct _IP* temp;
+    struct _IP* temp;
 
-  temp = dnsTable->first_DNSentry->first_ip;
-    while (ptr != NULL) {
-      if (strcmp(ptr->domainName, domainRequested) == 0) {
-        printf("found\n");
-        domainFound = 1;
+    temp = dnsTable->first_DNSentry->first_ip;
+      while (ptr != NULL) {
+        if (strcmp(ptr->domainName, domainRequested) == 0) {
+          printf("found\n");
+          domainFound = 1;
 
-        while(ptr->first_ip != NULL) {
-          counter++;
-            
-          struct in_addr address;
+          while(ptr->first_ip != NULL) {
+            counter++;
+              
+            struct in_addr address;
 
-          printf("IP #%d for this address: %s\n", counter, inet_ntoa(ptr->first_ip->IP));
+            printf("IP #%d for this address: %s\n", counter, inet_ntoa(ptr->first_ip->IP));
 
-          address = ptr->first_ip->IP;
+            address = ptr->first_ip->IP;
 
-          staddr(address, replyBuffer+offset);
+            staddr(address, replyBuffer+offset);
 
-          offset+=sizeof(struct in_addr);
-            
-          ptr->first_ip = ptr->first_ip->nextIP;
-        }
-        break;
-      } else {
-          ptr = ptr->nextDNSEntry;
-        }  
-    }
+            offset+=sizeof(struct in_addr);
+              
+            ptr->first_ip = ptr->first_ip->nextIP;
+          }
+          break;
+        } else {
+            ptr = ptr->nextDNSEntry;
+          }  
+      }
 
-    send(sock, replyBuffer, offset, 0);
+      send(sock, replyBuffer, offset, 0);
 
     }
 }
@@ -505,6 +507,7 @@ void process_CHANGE_DOMAIN_msg(int sock, char* buffer, int msg_size, struct _DNS
   int counter = 0;
   int IPfound = 0;
   int offset = 0;
+  int found = 0;
   struct in_addr addrOld, addrNew;
   char domain[MAX_BUFF_SIZE];
 
@@ -512,27 +515,29 @@ void process_CHANGE_DOMAIN_msg(int sock, char* buffer, int msg_size, struct _DNS
 
   strcpy(domain, buffer+offset);
 
-  offset+=strlen(domain)+1;
+  domainFound = searchDomain(domain, dnsTable);
 
-  addrOld = ldaddr(buffer+offset);
+    offset+=strlen(domain)+1;
 
-  entryIP1->IP = addrOld;
+    addrOld = ldaddr(buffer+offset);
 
-  offset+=sizeof(struct in_addr);
+    entryIP1->IP = addrOld;
 
-  addrNew = ldaddr(buffer+offset);
+    offset+=sizeof(struct in_addr);
 
-  printf("DOMAIN %s\n", dnsTable->first_DNSentry->domainName);
+    addrNew = ldaddr(buffer+offset);
 
-  printf("OLD IP: %s\n", inet_ntoa(entryIP1->IP));
+    printf("DOMAIN %s\n", dnsTable->first_DNSentry->domainName);
 
-  entryIP2->IP = addrNew;
+    printf("OLD IP: %s\n", inet_ntoa(entryIP1->IP));
 
-  printf("NEW IP: %s\n", inet_ntoa(entryIP2->IP));
+    entryIP2->IP = addrNew;
 
-  ptr = dnsTable->first_DNSentry;
+    printf("NEW IP: %s\n", inet_ntoa(entryIP2->IP));
 
-  struct _IP* temp = malloc(sizeof(struct _IP));;
+    ptr = dnsTable->first_DNSentry;
+
+    struct _IP* temp = malloc(sizeof(struct _IP));;
 
     while (ptr != NULL) {
       printf("Website name: %s\n", ptr->domainName);
@@ -540,11 +545,8 @@ void process_CHANGE_DOMAIN_msg(int sock, char* buffer, int msg_size, struct _DNS
 
         temp = ptr->first_ip;
 
-        printf("Domain found\n");
-        domainFound = 1;
-
         while(temp != NULL) {
-          
+            
           address = temp->IP;
 
           if (address.s_addr == addrOld.s_addr) {
@@ -555,11 +557,11 @@ void process_CHANGE_DOMAIN_msg(int sock, char* buffer, int msg_size, struct _DNS
 
             printf("IP FOUND AND CHANGED\n");
 
-            
+              
 
             offset+=sizeof(struct in_addr);
           }
-          temp = temp->nextIP;
+            temp = temp->nextIP;
         }
         break;
       } else {
@@ -567,14 +569,41 @@ void process_CHANGE_DOMAIN_msg(int sock, char* buffer, int msg_size, struct _DNS
         }  
     }
 
-    if (domainFound == 0) {
-      printf("DOMAIN NOT FOUND\n");
+    if (domainFound == 0 || IPfound == 0) {
+      printf("DOMAIN DOESN'T EXIST\n");
       sendOpCodeMSG(sock, MSG_OP_ERR);
+    } else {
+      sendOpCodeMSG(sock,MSG_CHANGE_DOMAIN);
     }
 
-    if (IPfound == 0) {
-      printf("IP NOT FOUND. NO IP MODIFIED\n");
+  
+}
+
+int process_DEL_DOMAIN_msg(int sock, char* buffer, int msg_size, struct _DNSTable *dnsTable) {
+
+  struct _DNSEntry *ptr = malloc(sizeof(struct _DNSEntry));
+  int found = 0;
+  int offset = 0;
+  char domainName[MAX_BUFF_SIZE];
+
+  ptr = dnsTable->first_DNSentry;
+
+  offset+=sizeof(short);
+  strcpy(domainName, buffer+offset);
+  printf("DOMAIN: %s\n", domainName);
+
+  found = searchDomain(domainName, dnsTable);
+
+  if (found == 0) {
+    printf("DOMAIN DOESN'T EXIST\n");
+    sendOpCodeMSG(sock, MSG_OP_ERR);
+  } else {
+    while (ptr != NULL) {
+      printf("%s\n", ptr->domainName);
+
+      ptr = ptr->nextDNSEntry;
     }
+  }
 }
 
 int searchDomain(char* domain, struct _DNSTable *dnsTable) {
