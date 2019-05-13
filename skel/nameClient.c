@@ -169,7 +169,7 @@ void process_list_operation(int sock)
 
 	msg_size = recv(sock, buffer, sizeof(buffer), 0);
 
-	printf("Domains: \n");
+	printf("DNS TABLE: \n");
 
   printDNSTableFromAnArrayOfBytes(buffer+sizeof(short), msg_size-sizeof(short));
 }
@@ -213,26 +213,20 @@ void process_domain(int sock)
 		printf("DOMAIN DOESN'T EXIST\n");
 	} else {
 
-	int numDomains = msg_size/sizeof(struct in_addr);
+		int numDomains = msg_size/sizeof(struct in_addr);
 
-	printf("%d IPs received\n", (msg_size-sizeof(short))/sizeof(struct in_addr));
+		printf("%d IPs received\n", (msg_size-sizeof(short))/sizeof(struct in_addr));
 
-	struct in_addr add;
+		struct in_addr add;
 
-	offset = sizeof(short);
+		offset = sizeof(short);
 
-	for (int i = 0; i<numDomains; i++) {
-		add = ldaddr(buffer+offset);
-		printf("ip #%d: %s\n", i+1, inet_ntoa(add));
-		offset+=sizeof(struct in_addr);
+		for (int i = 0; i<numDomains; i++) {
+			add = ldaddr(buffer+offset);
+			printf("ip #%d: %s\n", i+1, inet_ntoa(add));
+			offset+=sizeof(struct in_addr);
+		}
 	}
-
-	}
-
-	
-
-	
-
 }
 
 void process_ADD_DOMAIN_operation(int sock) {
@@ -374,6 +368,7 @@ void process_DELETE_DOMAIN_operation(int sock) {
 	char buffer[MAX_BUFF_SIZE];
 	int offset = 0;
 	char domainName[MAX_BUFF_SIZE];
+	unsigned short opCode;
 
 	stshort(MSG_DEL_DOMAIN, buffer);
 	offset+=sizeof(short);
@@ -386,6 +381,16 @@ void process_DELETE_DOMAIN_operation(int sock) {
 	offset+=1;
 
 	send(sock, buffer, offset, 0);
+
+	recv(sock,buffer, sizeof(buffer), 0);	
+
+	opCode = ldshort(buffer);
+
+	if (opCode == 12) {
+		printf("DOMAIN DOESN'T EXIST\n");
+	} else {
+		printf("DOMAIN DELETED");
+	}
 }
 
 

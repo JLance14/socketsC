@@ -415,6 +415,7 @@ int process_DOMAIN_RQ_msg(int sock, char* buffer, struct _DNSTable *dnsTable, in
       send(sock, replyBuffer, offset, 0);
 
     }
+  ptr = dnsTable->first_DNSentry;
 }
 
 void process_ADD_DOMAIN_msg(int sock, char* buffer, int msg_size, struct _DNSTable *dnsTable) {
@@ -582,6 +583,7 @@ void process_CHANGE_DOMAIN_msg(int sock, char* buffer, int msg_size, struct _DNS
 int process_DEL_DOMAIN_msg(int sock, char* buffer, int msg_size, struct _DNSTable *dnsTable) {
 
   struct _DNSEntry *ptr = malloc(sizeof(struct _DNSEntry));
+  struct _DNSEntry *temp = malloc(sizeof(struct _DNSEntry));
   int found = 0;
   int offset = 0;
   char domainName[MAX_BUFF_SIZE];
@@ -598,9 +600,30 @@ int process_DEL_DOMAIN_msg(int sock, char* buffer, int msg_size, struct _DNSTabl
     printf("DOMAIN DOESN'T EXIST\n");
     sendOpCodeMSG(sock, MSG_OP_ERR);
   } else {
+    sendOpCodeMSG(sock, MSG_DEL_DOMAIN);
     while (ptr != NULL) {
-      printf("%s\n", ptr->domainName);
 
+      if (strcmp(ptr->domainName, domainName) == 0) {
+        dnsTable->first_DNSentry = dnsTable->first_DNSentry->nextDNSEntry;
+        ptr = NULL;
+        break;
+      } else {
+
+
+        temp = ptr->nextDNSEntry;
+        printf("%s\n", ptr->domainName);
+        if (strcmp(temp->domainName, domainName) == 0) {
+
+          printf("TEMP: %s\n", temp->domainName);
+
+          ptr->nextDNSEntry = temp->nextDNSEntry;
+
+          temp = NULL;
+          break;
+        } else {
+          
+        }
+      }
       ptr = ptr->nextDNSEntry;
     }
   }
