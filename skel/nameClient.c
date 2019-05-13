@@ -128,6 +128,9 @@ void process_menu_option(int s, int option)
 		case MENU_OP_CHANGE:
 			process_CHANGE_DOMAIN_operation(s);
 			break;
+		case MENU_OP_DELETE_DOMAIN :
+			process_DELETE_DOMAIN_operation(s);
+			break;
     case MENU_OP_FINISH:
 			sendOpCodeMSG(s,MSG_OP_ERR);
 			exit(0);
@@ -301,26 +304,25 @@ void process_ADD_DOMAIN_operation(int sock) {
 void process_CHANGE_DOMAIN_operation(int sock) {
 
 	struct in_addr addrOld, addrNew;
-	
 	char buffer[MAX_BUFF_SIZE];
-
-	char* domainName;
-
 	char oldIP[50];
 	char newIP[50];
-
-	char userInput[MAX_BUFF_SIZE];
+	char domainName[MAX_BUFF_SIZE];
 
 	int offset = 0;
 
-	printf("Enter domain name: \n");
-	scanf("%s", userInput);
+	stshort(MSG_CHANGE_DOMAIN, buffer);
 
-	strcpy(domainName, userInput);
+	printf("Enter domain name: \n");
+	scanf("%s", domainName);
+
 
 	offset+=sizeof(short);
 
-	int msg_size = sizeof(short) + strlen(domainName) + 1 + 8;
+	strcpy(buffer+offset, domainName);
+
+
+
 
 	offset+=strlen(domainName);
 	offset+=1;
@@ -342,15 +344,31 @@ void process_CHANGE_DOMAIN_operation(int sock) {
 
 	addrNew = ldaddr(buffer+2+strlen(domainName)+1+sizeof(struct in_addr));
 
-	stshort(MSG_CHANGE_DOMAIN, buffer);
 
-	strcpy(buffer+2, domainName);
 
 	staddr(add, buffer+2+strlen(domainName) + 1);
 	
 	staddr(add2, buffer+2+strlen(domainName) + 1 + sizeof(add));
 
 	send(sock, buffer, offset, 0);
+
+}
+
+void process_DELETE_DOMAIN_operation(int sock) {
+	printf("PROCESSING DELETE DOMAIN");
+
+	char buffer[MAX_BUFF_SIZE];
+	int offset = 0;
+	char* domainName;
+
+	stshort(MSG_DEL_DOMAIN, buffer);
+	offset+=sizeof(short);
+
+	printf("Enter domain name: \n");
+
+
+
+
 
 }
 

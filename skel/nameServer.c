@@ -514,8 +514,6 @@ void process_CHANGE_DOMAIN_msg(int sock, char* buffer, int msg_size, struct _DNS
 
   offset+=strlen(domain)+1;
 
-  printf("MSG SIZE %d\n", msg_size);
-
   addrOld = ldaddr(buffer+offset);
 
   entryIP1->IP = addrOld;
@@ -526,7 +524,7 @@ void process_CHANGE_DOMAIN_msg(int sock, char* buffer, int msg_size, struct _DNS
 
   printf("DOMAIN %s\n", dnsTable->first_DNSentry->domainName);
 
-  printf("ADDR OLD: %s\n", inet_ntoa(entryIP1->IP));
+  printf("OLD IP: %s\n", inet_ntoa(entryIP1->IP));
 
   entryIP2->IP = addrNew;
 
@@ -557,9 +555,7 @@ void process_CHANGE_DOMAIN_msg(int sock, char* buffer, int msg_size, struct _DNS
 
             printf("IP FOUND AND CHANGED\n");
 
-            printDNSTable(dnsTable);
-
-            ptr->first_ip->IP = addrNew;
+            
 
             offset+=sizeof(struct in_addr);
           }
