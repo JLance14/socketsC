@@ -131,6 +131,9 @@ void process_menu_option(int s, int option)
 		case MENU_OP_CHANGE:
 			process_CHANGE_DOMAIN_operation(s);
 			break;
+		case MENU_OP_DELETE_IP:
+			process_DELETE_IP_operation(s);
+			break;
 		case MENU_OP_DELETE_DOMAIN :
 			process_DELETE_DOMAIN_operation(s);
 			break;
@@ -350,9 +353,9 @@ void process_CHANGE_DOMAIN_operation(int sock) {
 
 	offset+=sizeof(sizeof(add));
 
-	staddr(add, buffer+2+strlen(domainName) + 1);
+	staddr(add, buffer+sizeof(short)+strlen(domainName) + 1);
 	
-	staddr(add2, buffer+2+strlen(domainName)+ 1 + sizeof(add));
+	staddr(add2, buffer+sizeof(short)+strlen(domainName)+ 1 + sizeof(add));
 
 	send(sock, buffer, offset, 0);
 
@@ -396,6 +399,43 @@ void process_DELETE_DOMAIN_operation(int sock) {
 	}
 }
 
+void process_DELETE_IP_operation(int sock) {
+	char buffer[MAX_BUFF_SIZE];
+	int offset = 0;
+	char domainName[MAX_BUFF_SIZE];
+	unsigned short opCode;
+	char IP[50];
+	struct in_addr add;
+
+	stshort(MSG_DEL_DOMAIN, buffer);
+	offset+=sizeof(short);
+
+	printf("Enter domain name to delete: \n");
+	scanf("%s", domainName);
+
+	strcpy(buffer+offset, domainName);
+	offset+=strlen(domainName);
+	offset+=1;
+
+	printf("Enter old IP: ");
+	scanf("%s", IP);
+	inet_aton(IP, &add);
+
+	staddr(add, buffer+offset);
+
+	send(sock, buffer, offset, 0);
+
+	recv(sock,buffer, sizeof(buffer), 0);	
+
+	opCode = ldshort(buffer);
+
+	if (opCode == 12) {
+		printf("DOMAIN DOESN'T EXIST\n");
+	} else {
+		printf("IP DELETED");
+	}
+}
+
 
 int main(int argc, char *argv[])
 {
@@ -403,9 +443,6 @@ int main(int argc, char *argv[])
 	char host[MAX_HOST_SIZE]; // variable per copiar el nom del host des de l'optarg
 	int option = 0; // variable de control del menu d'opcions
 	int ctrl_options;
-
-  
-	
 
   ctrl_options = getProgramOptions(argc, argv, host, &port);
 

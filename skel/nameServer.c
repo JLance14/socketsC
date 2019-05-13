@@ -290,7 +290,10 @@ int process_msg(int sock, struct _DNSTable *dnsTable)
       break;
     case MSG_CHANGE_DOMAIN:
       process_CHANGE_DOMAIN_msg(sock, buffer, msg_size, dnsTable);
-      break;      
+      break; 
+    case MSG_DEL_IP:
+      process_DEL_IP_msg(sock,buffer, msg_size, dnsTable);
+      break;     
     case MSG_DEL_DOMAIN:
       process_DEL_DOMAIN_msg(sock, buffer, msg_size, dnsTable);
       break;
@@ -588,6 +591,24 @@ void process_CHANGE_DOMAIN_msg(int sock, char* buffer, int msg_size, struct _DNS
   
 }
 
+void process_DEL_IP_msg(int sock, char* buffer, int msg_size, struct _DNSTable *dnsTable) {
+  int offset = 0;
+  int found = 0;
+  char domainName[MAX_BUFF_SIZE];
+  offset+=sizeof(short);
+  strcpy(domainName, buffer+offset);
+
+  found = searchDomain(domainName, dnsTable);
+
+  if (found == 0) {
+    printf("DOMAIN DOESN'T EXIST\n");
+    sendOpCodeMSG(sock, MSG_OP_ERR);
+  } else {
+    sendOpCodeMSG(sock, MSG_DEL_DOMAIN);
+
+  }
+}
+
 int process_DEL_DOMAIN_msg(int sock, char* buffer, int msg_size, struct _DNSTable *dnsTable) {
 
   struct _DNSEntry *ptr = malloc(sizeof(struct _DNSEntry));
@@ -634,7 +655,6 @@ int process_DEL_DOMAIN_msg(int sock, char* buffer, int msg_size, struct _DNSTabl
     }
   }
 }
-
 
 
 int searchDomain(char* domain, struct _DNSTable *dnsTable) {
