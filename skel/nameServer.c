@@ -500,15 +500,16 @@ void process_ADD_DOMAIN_msg(int sock, char* buffer, int msg_size, struct _DNSTab
   struct _DNSEntry *newEntry = malloc(sizeof(struct _DNSEntry));
   struct _DNSEntry *ptr = dnsTable->first_DNSentry;
   struct _IP *newIPList = malloc(sizeof(struct _IP));
-  struct _IP *nextIPList = malloc(sizeof(struct _IP));
-  struct in_addr address;
+  struct _IP *temp;
+  struct in_addr address, address2;
   int offset = 0;
   int found = 0;
   char domain[MAX_BUFF_SIZE];
+  int firstIP = 1;
+  int count = 0;
 
   newEntry->nextDNSEntry = NULL;
   newEntry->first_ip = newIPList;
-  newIPList->nextIP = nextIPList;
 
   offset += sizeof(short);
 
@@ -539,29 +540,27 @@ void process_ADD_DOMAIN_msg(int sock, char* buffer, int msg_size, struct _DNSTab
 
     if (ptr->nextDNSEntry == NULL && found == 0) {
 
-      printf("%s LAST\n", ptr->domainName);
-
-      //ptr->nextDNSEntry = malloc(sizeof(struct _DNSEntry));
-
       ptr->nextDNSEntry = newEntry;
-
-      //strcpy(newEntry->domainName, domain);
-
-      printf("OKI %s\n", newEntry->domainName);
 
       newEntry->first_ip = newIPList;
 
-      while (offset < msg_size) {
+      for (int i = 0; i<newEntry->numberOfIPs; i++) {
+        temp = malloc(sizeof(struct _IP));
         address = ldaddr(buffer+offset);
-        printf("IP: %s\n", inet_ntoa(address));
-        newIPList->IP = address;
-        newIPList->nextIP = nextIPList;
-        newIPList = nextIPList;
         offset+=sizeof(struct in_addr);
-        printf("OFFSET %d\n", offset);
-      }
-      newIPList->nextIP = NULL;
+        newIPList->IP = address;
 
+        printf("IP %i: %s\n", i+1, inet_ntoa(newIPList->IP));
+        address = ldaddr(buffer+offset);
+        temp->IP = address;
+        
+        printf("IP %i: %s\n", i+2, inet_ntoa(temp->IP));
+        newIPList->nextIP = temp;
+        newIPList = newIPList->nextIP;
+        i++;
+      }
+
+      newIPList->nextIP = NULL;
       found = 1;
     }
   }
@@ -569,6 +568,9 @@ void process_ADD_DOMAIN_msg(int sock, char* buffer, int msg_size, struct _DNSTab
   printDNSTable(dnsTable);
 
 }
+
+
+
 
 void process_CHANGE_DOMAIN_msg(int sock, char* buffer, int msg_size, struct _DNSTable *dnsTable) {
 
