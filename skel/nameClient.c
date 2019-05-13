@@ -127,6 +127,7 @@ void process_menu_option(int s, int option)
 			break;
 		case MENU_OP_CHANGE:
 			process_CHANGE_DOMAIN_operation(s);
+			break;
     case MENU_OP_FINISH:
 			sendOpCodeMSG(s,MSG_OP_ERR);
 			exit(0);
@@ -173,20 +174,18 @@ void process_list_operation(int sock)
 void process_domain(int sock) 
 {
 	int offset=0;
-	int msg_size=0;
+	int msg_size;
 	char *domainName;
 	char userInput[MAX_BUFF_SIZE];
 	char buffer[MAX_BUFF_SIZE];
+	unsigned short code;
 
 	memset(buffer, '\0',sizeof(buffer));
-	sendOpCodeMSG(sock, MSG_DOMAIN_RQ);
 
 	printf("Domain name to search: ");
 	scanf("%s", userInput);
 
 	strcpy(domainName, userInput);
-
-	msg_size = strlen(domainName);
 
 	stshort(MSG_DOMAIN_RQ, buffer);
 
@@ -194,9 +193,10 @@ void process_domain(int sock)
 
 	strcpy(buffer + offset, domainName);
 
-	offset+=msg_size;
+	offset+=strlen(domainName);
+	offset+=1;
 
-	send(sock, buffer, sizeof(short)+strlen(domainName)+1, 0);
+	send(sock, buffer, offset, 0);
 
 	// RECEIVE AND PROCESS REPLY
 
@@ -204,24 +204,26 @@ void process_domain(int sock)
 
 	msg_size = recv(sock, buffer, sizeof(buffer), 0);
 
-	printf("RECEIVED MESSAGE of size: %d\n", msg_size);
+	code = ldshort(buffer);
+
+	if (code == 12) {
+		printf("DOMAIN DOESN'T EXIST\n");
+	} else {
 
 	int numDomains = msg_size/sizeof(struct in_addr);
 
-	printf("%d IPs recibidos\n", (msg_size-sizeof(short))/sizeof(struct in_addr));
+	printf("%d IPs received\n", (msg_size-sizeof(short))/sizeof(struct in_addr));
 
 	struct in_addr add;
 
-	int off = sizeof(short);
-
+	offset = sizeof(short);
 
 	for (int i = 0; i<numDomains; i++) {
-
-		add = ldaddr(buffer+off);
-
+		add = ldaddr(buffer+offset);
 		printf("ip #%d: %s\n", i+1, inet_ntoa(add));
-			
-		off+=sizeof(struct in_addr);
+		offset+=sizeof(struct in_addr);
+	}
+
 	}
 
 	
@@ -348,10 +350,8 @@ void process_CHANGE_DOMAIN_operation(int sock) {
 	
 	staddr(add2, buffer+2+strlen(domainName) + 1 + sizeof(add));
 
-
 	send(sock, buffer, offset, 0);
 
-	
 }
 
 
